@@ -131,6 +131,37 @@ export async function scan(target, { mode = 'default' } = {}) {
       })
     : [path.resolve(target)];
 
+  // --- 4.1 Immediate-critical-pattern scan (immediate fail) -------
+  const CRITICAL_PATTERNS = [
+    /rm\s+-rf\s+\/\b/gi,
+    /\|\s*sh\b/gi,
+    /\|\s*bash\b/gi,
+    /child_process/gi,
+    /spawn\s*\(\s*['"`]\/bin\/sh/gi,
+    /net\.Socket/gi,
+    /http\.get\s*\(/gi,
+    /wget\s+/gi,
+    /curl\s+/gi,
+  ];
+  let criticalCount = 0;
+  for (const file of allFiles) {
+    const content = await fs.readFile(file, 'utf8');
+    for (const re of CRITICAL_PATTERNS) {
+      const matches = content.match(re);
+      if (matches) criticalCount += matches.length;
+    }
+  }
+  if (criticalCount > 0) {
+    return {
+      target,
+      mode,
+      score: 0,
+      rating: 'bad',
+      messages: [`${criticalCount} critical dangerous pattern(s) detected`],
+      exitCode: 2,
+    };
+  }
+
   // Separate JS/TS files from others
   const jsFiles = allFiles.filter(f => CODE_EXT.has(path.extname(f)));
   const otherFiles = allFiles.filter(f => !CODE_EXT.has(path.extname(f)));
@@ -165,7 +196,6 @@ export async function scan(target, { mode = 'default' } = {}) {
   let xrayCount = 0;
   if (mode !== 'fast') {
     for (const file of jsFiles) {
-      // Analyse file on disk via NodeSecure AST analyser
       const { warnings } = await xray.analyseFile(file);
       if (warnings && warnings.length) {
         xrayCount += warnings.length;
@@ -182,7 +212,7 @@ export async function scan(target, { mode = 'default' } = {}) {
     semgrepPenalty = semgrepCount * 5;  // −5 points per finding
   }
 
-  /* 4.6 Heuristic scan across all files */
+  /* 4.5 Heuristic scan across all files */
   let heuristicPenalty = 0;
   let heuristicCount = 0;
   for (const file of allFiles) {
@@ -192,7 +222,7 @@ export async function scan(target, { mode = 'default' } = {}) {
   }
   heuristicPenalty = heuristicCount * 3;  // −3 points per pattern
 
-  /* 4.7 Security vulnerabilities (npm audit) – skip in fast */
+  /* 4.6 Security vulnerabilities (npm audit) – skip in fast */
   let vulnPenalty = 0;
   if (mode !== 'fast') {
     const pkgDir = stats.isDirectory() ? target : path.dirname(target);
