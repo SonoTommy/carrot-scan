@@ -30,6 +30,7 @@
   "devDependencies": {
     "eslint-plugin-security": "^3.0.1",
     "eslint-plugin-unicorn": "^59.0.1",
-    "js-x-ray": "^3.2.0"
+    "js-x-ray": "^3.2.0",
+    "semgrep": "^0.0.1"
   }
 }

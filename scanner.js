@@ -58,6 +58,26 @@ async function runNpmAudit(cwd) {
   }
 }
 
+/**
+ * Runs semgrep via npx (local installation) with OWASP Top Ten rules.
+ * Returns the count of findings, or 0 on error.
+ * @param {string} targetDir
+ */
+async function runSemgrep(targetDir) {
+  try {
+    const cmd = process.platform === 'win32' ? 'npx.cmd' : 'npx';
+    const args = ['semgrep', '--quiet', '--json', '--config', 'p/owasp-top-ten', targetDir];
+    const { stdout } = await exec(cmd, args, {
+      cwd: process.cwd(),
+      maxBuffer: 10 * 1024 * 1024,
+    });
+    const report = JSON.parse(stdout);
+    return Array.isArray(report.results) ? report.results.length : 0;
+  } catch {
+    return 0;
+  }
+}
+
 /* ────────────────────────────────────────────────────────────────────────────
    3. Constants
    ────────────────────────────────────────────────────────────────────────── */
@@ -154,7 +174,15 @@ export async function scan(target, { mode = 'default' } = {}) {
     xrayPenalty = xrayCount * 10;       // −10 points per finding
   }
 
-  /* 4.5 Heuristic scan for other files */
+  /* 4.5 Semgrep multi-language scan (skip in fast) */
+  let semgrepCount = 0;
+  let semgrepPenalty = 0;
+  if (mode !== 'fast') {
+    semgrepCount = await runSemgrep(stats.isDirectory() ? target : path.dirname(target));
+    semgrepPenalty = semgrepCount * 5;  // −5 points per finding
+  }
+
+  /* 4.6 Heuristic scan for all files */
   let heuristicPenalty = 0;
   let heuristicCount = 0;
   for (const file of otherFiles) {
@@ -164,7 +192,7 @@ export async function scan(target, { mode = 'default' } = {}) {
   }
   heuristicPenalty = heuristicCount * 3;  // −3 points per pattern
 
-  /* 4.6 Security vulnerabilities (npm audit) – skip in fast */
+  /* 4.7 Security vulnerabilities (npm audit) – skip in fast */
   let vulnPenalty = 0;
   if (mode !== 'fast') {
     const pkgDir = stats.isDirectory() ? target : path.dirname(target);
@@ -177,6 +205,7 @@ export async function scan(target, { mode = 'default' } = {}) {
   score -= lintErrors * 2;
   score -= complexityPenalty;
   score -= xrayPenalty;
+  score -= semgrepPenalty;     // semgrep findings
   score -= heuristicPenalty;
   score -= vulnPenalty;
   score = Math.max(0, score);
@@ -189,6 +218,7 @@ export async function scan(target, { mode = 'default' } = {}) {
     `${lintErrors} ESLint error(s)`,
     ...(mode !== 'fast' ? [`${complexityPenalty} complexity penalty`] : []),
     ...(mode !== 'fast' && xrayCount ? [`${xrayCount} potential injection/backdoor pattern(s)`] : []),
+    ...(mode !== 'fast' && semgrepCount ? [`${semgrepCount} semgrep finding(s)`] : []),
     ...(heuristicCount ? [`${heuristicCount} heuristic pattern(s)`] : []),
     ...(mode !== 'fast' && vulnPenalty ? [`${vulnPenalty} security penalty`] : []),
   ];
