@@ -63,18 +63,30 @@ async function runNpmAudit(cwd) {
    ────────────────────────────────────────────────────────────────────────── */
 const CODE_EXT = new Set(['.js', '.mjs', '.cjs', '.ts', '.tsx', '.jsx']);
 
-// --- heuristic fallback for non-JS files --------------------------------
+// --- Heuristic fallback for all files (counts every match) ----------
 const BAD_PATTERNS = [
-  /eval\s*\(/i,
-  /exec\s*(?:Sync)?\s*\(/i,
-  /system\s*\(/i,
-  /\bSELECT\s+.*\bFROM\b.*\bWHERE\b/i,
-  /base64_decode\s*\(/i,
-  /new Function\s*\(/i,
-  /require\(.*child_process/i,
+  /eval\s*\(/gi,                            // eval() calls
+  /exec\s*(?:Sync)?\s*\(/gi,                // exec()/execSync()
+  /system\s*\(/gi,                          // system()
+  /include\s*\(/gi,                         // PHP include()
+  /require\s*\(/gi,                         // PHP require()
+  /mysqli_query\s*\(/gi,                    // PHP SQL ops
+  /\$_(GET|POST|REQUEST)\b/gi,              // raw superglobals
+  /\bSELECT\s+.*\bFROM\b.*\bWHERE\b/gi,     // SQL‐injection
+  /base64_decode\s*\(/gi,                   // PHP obfuscation
+  /new Function\s*\(/gi,                    // JS dynamic code
+  /shell_exec\s*\(/gi,                      // PHP shell_exec()
+  /popen\s*\(/gi,                           // PHP popen()
+  /passthru\s*\(/gi,                        // PHP passthru()
+  /proc_open\s*\(/gi,                       // PHP proc_open()
+  /pcntl_exec\s*\(/gi,                      // PHP pcntl_exec()
+  /preg_replace\s*\(.*\/e/gi,               // preg_replace /e modifier
 ];
 function heuristicBadness(text) {
-  return BAD_PATTERNS.reduce((count, re) => count + (re.test(text) ? 1 : 0), 0);
+  return BAD_PATTERNS.reduce((count, re) => {
+    const matches = text.match(re);
+    return count + (matches ? matches.length : 0);
+  }, 0);
 }
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -95,6 +107,7 @@ export async function scan(target, { mode = 'default' } = {}) {
         gitignore: true,
         absolute: true,
         onlyFiles: true,
+        dot: true,           // include hidden/dotfiles
       })
     : [path.resolve(target)];
 
