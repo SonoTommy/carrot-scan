@@ -1,0 +1,26 @@
+{
+  "name": "carrot-scan",
+  "version": "1.0.0",
+  "description": "hi",
+  "main": "index.js",
+  "bin": {
+    "carrot-scan": "./cli.js"
+  },
+  "type": "module",
+  "scripts": {
+    "test": "node ./test.js"
+  },
+  "keywords": [
+    "scanner",
+    "quality",
+    "cli"
+  ],
+  "author": "SonoTommy [https://github.com/SonoTommy]",
+  "repository": "https://github.com/SonoTommy/carrot-scan",
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "^5.4.1",
+    "commander": "^14.0.0",
+    "globby": "^14.1.0"
+  }
+}
