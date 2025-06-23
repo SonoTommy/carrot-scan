@@ -182,10 +182,10 @@ export async function scan(target, { mode = 'default' } = {}) {
     semgrepPenalty = semgrepCount * 5;  // −5 points per finding
   }
 
-  /* 4.6 Heuristic scan for all files */
+  /* 4.6 Heuristic scan across all files */
   let heuristicPenalty = 0;
   let heuristicCount = 0;
-  for (const file of otherFiles) {
+  for (const file of allFiles) {
     const text = await fs.readFile(file, 'utf8');
     const hits = heuristicBadness(text);
     if (hits) heuristicCount += hits;
