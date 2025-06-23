@@ -16,7 +16,10 @@
     "cli"
   ],
   "author": "SonoTommy [https://github.com/SonoTommy]",
-  "repository": "https://github.com/SonoTommy/carrot-scan",
+  "repository":{
+    "type": "git",
+    "url": "https://github.com/SonoTommy/carrot-scan"
+  },
   "license": "MIT",
   "dependencies": {
     "@eslint/js": "^9.29.0",
