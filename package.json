@@ -20,6 +20,10 @@
     "type": "git",
     "url": "https://github.com/SonoTommy/carrot-scan"
   },
+  "funding": {
+    "type": "ko-fi",
+    "url": "https://ko-fi.com/sonotommy"
+  },
   "license": "MIT",
   "dependencies": {
     "@eslint/js": "^9.29.0",
