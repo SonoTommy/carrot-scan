@@ -1,7 +1,7 @@
 # carrot-scan
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/JustSouichi/finview/refs/heads/main/img/logo.svg" width="200" height="179" alt="">
+  <img src="https://raw.githubusercontent.com/SonoTommy/carrot-scan/refs/heads/main/img/logo.png" width="200" height="179" alt="">
   <br><strong>Command-line tool for monitoring financial data and market trends in real-time directly from your terminal.</strong>
   <br><a href="https://github.com/JustSouichi/finview">GitHub Repository</a>
 </p>
