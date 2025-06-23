@@ -1,9 +1,9 @@
 # carrot-scan
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/SonoTommy/carrot-scan/refs/heads/main/img/logo.png" width="200" height="179" alt="">
-  <br><strong>Command-line tool for monitoring financial data and market trends in real-time directly from your terminal.</strong>
-  <br><a href="https://github.com/JustSouichi/finview">GitHub Repository</a>
+  <img src="https://raw.githubusercontent.com/SonoTommy/carrot-scan/refs/heads/main/img/logo.svg" width="200" height="179" alt="">
+  <br><strong>Command-line tool for detecting vulnerabilities in files and directories.</strong>
+  <br><a href="https://github.com/SonoTommy/carrot-scan">GitHub Repository</a>
 </p>
 
 
@@ -11,6 +11,14 @@
 [![GitHub issues](https://img.shields.io/github/issues/SonoTommy/carrot-scan.svg)](https://github.com/SonoTommy/carrot-scan/issues)
 [![GitHub stars](https://img.shields.io/github/stars/SonoTommy/carrot-scan.svg?style=social&label=Stars)](https://github.com/SonoTommy/carrot-scan/stargazers)
 [![Downloads](https://img.shields.io/npm/dt/carrot-scan.svg)](https://www.npmjs.com/package/carrot-scan)
+
+## Installation
+
+Install carrot-scan globally using npm:
+
+```bash
+npm install -g carrot-scan
+```
 
 A **fast**, **extensible**, and **plugin-driven** code scanner for JavaScript, TypeScript, and any other file in your project.  
 It evaluates code quality, complexity, security vulnerabilities, and more, producing a **single aggregated score** (0–100) and actionable feedback.
