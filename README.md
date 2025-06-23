@@ -139,6 +139,13 @@ export default {
 
 Please follow the existing code style and include unit tests for new plugins.
 
+## ☕ Support my project
+
+If you like carrot-scan and want to support its development, you can buy me a coffee:
+
+☕ (https://ko-fi.com/SonoTommy)
+
+
 ## License
 
 © 2025 Tommaso “Tommy” [MIT License](LICENSE)
