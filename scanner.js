@@ -1,264 +1,77 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { globby } from 'globby';
-import escomplex from 'typhonjs-escomplex';
-import { execFile } from 'node:child_process';
-import { promisify } from 'node:util';
-//import xray from 'js-x-ray';   // CJS default export exposes .analyze()
-import { AstAnalyser } from '@nodesecure/js-x-ray';
-import { createRequire } from 'node:module';
-const requireCJS = createRequire(import.meta.url);
-const eslintMain = requireCJS.resolve('eslint');
-const eslintBin = path.resolve(path.dirname(eslintMain), '../bin/eslint.js');
 
-//TEST
-const xray = new AstAnalyser();
+// Plugins
+import { critical } from './plugins/critical.js';
+import { eslint } from './plugins/eslint.js';
+import { complexity } from './plugins/complexity.js';
+import { xray } from './plugins/xray.js';
+import { semgrep } from './plugins/semgrep.js';
+import { heuristic } from './plugins/heuristic.js';
+import { audit } from './plugins/audit.js';
 
-/**
- * Runs the ESLint CLI with recommended rules and returns total error count.
- * Disables project configs via --no-eslintrc.
- * @param {string[]} files
- */
-async function runESLint(files) {
-  if (!files.length) return 0;
-  try {
-    const args = [
-      '--no-eslintrc',
-      '--config', 'eslint:recommended',
-      '--format', 'json',
-      ...files,
-    ];
-    const { stdout } = await execFile(eslintBin, args);
-    const results = JSON.parse(stdout);
-    return results.reduce((sum, r) => sum + r.errorCount, 0);
-  } catch {
-    return 0;
-  }
-}
+// Plugin list in desired order
+const plugins = [critical, eslint, complexity, xray, semgrep, heuristic, audit];
 
-/* ────────────────────────────────────────────────────────────────────────────
-   2. Run `npm audit --json` and tally vulnerabilities
-   ────────────────────────────────────────────────────────────────────────── */
-const exec = promisify(execFile);
-
-async function runNpmAudit(cwd) {
-  try {
-    const { stdout } = await exec('npm', ['audit', '--json'], { cwd });
-    const audit = JSON.parse(stdout);
-    const vulns = audit.vulnerabilities || audit;        // Node ≥20 vs older
-    let critical = 0, high = 0, moderate = 0;
-    for (const v of Object.values(vulns)) {
-      critical += v.critical  || 0;
-      high     += v.high      || 0;
-      moderate += v.moderate  || 0;
-    }
-    return { critical, high, moderate };
-  } catch {
-    return null;         // offline / no package.json? … just skip
-  }
-}
+// Default weightings (can override via config file)
+const defaultWeights = {
+  critical:   50,   // immediate-fail severity
+  eslint:     2,    // per error
+  complexity: 1,    // per point over threshold
+  xray:       8,    // per warning
+  semgrep:    5,    // per finding
+  heuristic:  3,    // per pattern
+  audit:      4,    // per vuln severity unit
+};
 
 /**
- * Runs semgrep via npx (local installation) with OWASP Top Ten rules.
- * Returns the count of findings, or 0 on error.
- * @param {string} targetDir
- */
-async function runSemgrep(targetDir) {
-  try {
-    const cmd = process.platform === 'win32' ? 'npx.cmd' : 'npx';
-    const args = ['semgrep', '--quiet', '--json', '--config', 'p/owasp-top-ten', targetDir];
-    const { stdout } = await exec(cmd, args, {
-      cwd: process.cwd(),
-      maxBuffer: 10 * 1024 * 1024,
-    });
-    const report = JSON.parse(stdout);
-    return Array.isArray(report.results) ? report.results.length : 0;
-  } catch {
-    return 0;
-  }
-}
-
-/* ────────────────────────────────────────────────────────────────────────────
-   3. Constants
-   ────────────────────────────────────────────────────────────────────────── */
-const CODE_EXT = new Set(['.js', '.mjs', '.cjs', '.ts', '.tsx', '.jsx']);
-
-// --- Heuristic fallback for all files (counts every match) ----------
-const BAD_PATTERNS = [
-  /eval\s*\(/gi,                            // eval() calls
-  /exec\s*(?:Sync)?\s*\(/gi,                // exec()/execSync()
-  /system\s*\(/gi,                          // system()
-  /include\s*\(/gi,                         // PHP include()
-  /require\s*\(/gi,                         // PHP require()
-  /mysqli_query\s*\(/gi,                    // PHP SQL ops
-  /\$_(GET|POST|REQUEST)\b/gi,              // raw superglobals
-  /\bSELECT\s+.*\bFROM\b.*\bWHERE\b/gi,     // SQL‐injection
-  /base64_decode\s*\(/gi,                   // PHP obfuscation
-  /new Function\s*\(/gi,                    // JS dynamic code
-  /shell_exec\s*\(/gi,                      // PHP shell_exec()
-  /popen\s*\(/gi,                           // PHP popen()
-  /passthru\s*\(/gi,                        // PHP passthru()
-  /proc_open\s*\(/gi,                       // PHP proc_open()
-  /pcntl_exec\s*\(/gi,                      // PHP pcntl_exec()
-  /preg_replace\s*\(.*\/e/gi,               // preg_replace /e modifier
-];
-function heuristicBadness(text) {
-  return BAD_PATTERNS.reduce((count, re) => {
-    const matches = text.match(re);
-    return count + (matches ? matches.length : 0);
-  }, 0);
-}
-
-/* ────────────────────────────────────────────────────────────────────────────
-   4. Public API
-   ────────────────────────────────────────────────────────────────────────── */
-/**
- * Scan a file or directory and return {score, rating, messages, …}
- * @param {string} target
+ * Scan entrypoint.
+ * @param {string} target - file or directory
  * @param {{mode:'fast'|'default'|'complete'}} opts
  */
 export async function scan(target, { mode = 'default' } = {}) {
+  // 1. File discovery
   const stats = await fs.stat(target);
-
-  // Gather all non-ignored files
   const allFiles = stats.isDirectory()
-    ? await globby(['**/*'], {
-        cwd: target,
-        gitignore: true,
-        absolute: true,
-        onlyFiles: true,
-        dot: true,           // include hidden/dotfiles
-      })
+    ? await globby(['**/*'], { cwd: target, gitignore: true, absolute: true, onlyFiles: true, dot: true })
     : [path.resolve(target)];
+  if (!allFiles.length) return { target, mode, score: 100, rating: 'good', messages: ['No files to scan'], exitCode: 0 };
 
-  // --- 4.1 Immediate-critical-pattern scan (immediate fail) -------
-  const CRITICAL_PATTERNS = [
-    /rm\s+-rf\s+\/\b/gi,
-    /\|\s*sh\b/gi,
-    /\|\s*bash\b/gi,
-    /child_process/gi,
-    /spawn\s*\(\s*['"`]\/bin\/sh/gi,
-    /net\.Socket/gi,
-    /http\.get\s*\(/gi,
-    /wget\s+/gi,
-    /curl\s+/gi,
-  ];
-  let criticalCount = 0;
-  for (const file of allFiles) {
-    const content = await fs.readFile(file, 'utf8');
-    for (const re of CRITICAL_PATTERNS) {
-      const matches = content.match(re);
-      if (matches) criticalCount += matches.length;
-    }
-  }
-  if (criticalCount > 0) {
-    return {
-      target,
-      mode,
-      score: 0,
-      rating: 'bad',
-      messages: [`${criticalCount} critical dangerous pattern(s) detected`],
-      exitCode: 2,
-    };
-  }
-
-  // Separate JS/TS files from others
-  const jsFiles = allFiles.filter(f => CODE_EXT.has(path.extname(f)));
-  const otherFiles = allFiles.filter(f => !CODE_EXT.has(path.extname(f)));
-
-  if (allFiles.length === 0) {
-    return {
-      target,
-      mode,
-      score: 100,
-      rating: 'good',
-      messages: ['No analyzable files found.'],
-      exitCode: 0,
-    };
-  }
-
-  /* 4.2 ESLint */
-  // 4.2 ESLint (via CLI)
-  const lintErrors = await runESLint(jsFiles);
-
-  /* 4.3 Cyclomatic complexity (skip in fast) */
-  let complexityPenalty = 0;
-  if (mode !== 'fast') {
-    for (const file of jsFiles) {
-      const src = await fs.readFile(file, 'utf8');
-      const { aggregate: { cyclomatic: cc } } = escomplex.analyzeModule(src);
-      if (cc > 10) complexityPenalty += cc - 10;
+  // 2. Plugin results collection
+  const results = [];
+  for (const plugin of plugins) {
+    const files = plugin.scope === 'js'
+      ? allFiles.filter(f => plugin.applies(f))
+      : allFiles;
+    if (!files.length) continue;
+    const count = await plugin.run(files, { target, mode });
+    results.push({ name: plugin.name, count });
+    if (plugin.name === 'critical' && count > 0) {
+      // Immediate fail on critical patterns
+      return { target, mode, score: 0, rating: 'bad', messages: [`${count} critical issues`] , exitCode: 2 };
     }
   }
 
-  /* 4.4 js-x-ray scan for injection / backdoor patterns (skip in fast) */
-  let xrayPenalty = 0;
-  let xrayCount = 0;
-  if (mode !== 'fast') {
-    for (const file of jsFiles) {
-      const { warnings } = await xray.analyseFile(file);
-      if (warnings && warnings.length) {
-        xrayCount += warnings.length;
-      }
-    }
-    xrayPenalty = xrayCount * 10;       // −10 points per finding
-  }
-
-  /* 4.5 Semgrep multi-language scan (skip in fast) */
-  let semgrepCount = 0;
-  let semgrepPenalty = 0;
-  if (mode !== 'fast') {
-    semgrepCount = await runSemgrep(stats.isDirectory() ? target : path.dirname(target));
-    semgrepPenalty = semgrepCount * 5;  // −5 points per finding
-  }
-
-  /* 4.5 Heuristic scan across all files */
-  let heuristicPenalty = 0;
-  let heuristicCount = 0;
-  for (const file of allFiles) {
-    const text = await fs.readFile(file, 'utf8');
-    const hits = heuristicBadness(text);
-    if (hits) heuristicCount += hits;
-  }
-  heuristicPenalty = heuristicCount * 3;  // −3 points per pattern
-
-  /* 4.6 Security vulnerabilities (npm audit) – skip in fast */
-  let vulnPenalty = 0;
-  if (mode !== 'fast') {
-    const pkgDir = stats.isDirectory() ? target : path.dirname(target);
-    const vuln = await runNpmAudit(pkgDir);
-    if (vuln) vulnPenalty = vuln.critical * 5 + vuln.high * 5 + vuln.moderate * 2;
-  }
-
-  /* 4.7 Scoring */
+  // 3. Scoring: weighted sum with normalized caps
   let score = 100;
-  score -= lintErrors * 2;
-  score -= complexityPenalty;
-  score -= xrayPenalty;
-  score -= semgrepPenalty;     // semgrep findings
-  score -= heuristicPenalty;
-  score -= vulnPenalty;
+  const messages = [];
+  for (const { name, count } of results) {
+    if (!count) continue;
+    const weight = defaultWeights[name] ?? 1;
+    const penalty = weight * count;
+    score -= penalty;
+    // Detailed message
+    messages.push(`${count} ${name} issue(s) (-${penalty})`);
+  }
   score = Math.max(0, score);
 
-  const rating = score >= 80 ? 'good'
-               : score >= 50 ? 'not good'
+  // 4. Final verdict
+  const rating = score >= 90 ? 'excellent'
+               : score >= 75 ? 'good'
+               : score >= 50 ? 'fair'
+               : score >= 25 ? 'poor'
                : 'bad';
 
-  const messages = [
-    `${lintErrors} ESLint error(s)`,
-    ...(mode !== 'fast' ? [`${complexityPenalty} complexity penalty`] : []),
-    ...(mode !== 'fast' && xrayCount ? [`${xrayCount} potential injection/backdoor pattern(s)`] : []),
-    ...(mode !== 'fast' && semgrepCount ? [`${semgrepCount} semgrep finding(s)`] : []),
-    ...(heuristicCount ? [`${heuristicCount} heuristic pattern(s)`] : []),
-    ...(mode !== 'fast' && vulnPenalty ? [`${vulnPenalty} security penalty`] : []),
-  ];
-
-  return {
-    target,
-    mode,
-    score,
-    rating,
-    messages,
-    exitCode: rating === 'good' ? 0 : rating === 'not good' ? 1 : 2,
-  };
+  return { target, mode, score, rating, messages, exitCode: rating === 'bad' ? 2 : rating === 'poor' ? 1 : 0 };
 }
