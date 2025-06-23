@@ -1,39 +1,25 @@
-# carrot-scan
-
+````markdown
 <p align="center">
-  <img src="https://raw.githubusercontent.com/SonoTommy/carrot-scan/refs/heads/main/img/logo.svg" width="200" height="179" alt="">
-  <br><strong>Command-line tool for detecting vulnerabilities in files and directories.</strong>
+  <img src="https://raw.githubusercontent.com/SonoTommy/carrot-scan/refs/heads/main/img/logo.svg" width="200" height="179" alt="Carrot Scan logo">
+  <br><strong>Command‑line tool for detecting vulnerabilities and code quality issues.</strong>
   <br><a href="https://github.com/SonoTommy/carrot-scan">GitHub Repository</a>
 </p>
-
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://raw.githubusercontent.com/SonoTommy/carrot-scan/refs/heads/main/LICENSE)
 [![GitHub issues](https://img.shields.io/github/issues/SonoTommy/carrot-scan.svg)](https://github.com/SonoTommy/carrot-scan/issues)
 [![GitHub stars](https://img.shields.io/github/stars/SonoTommy/carrot-scan.svg?style=social&label=Stars)](https://github.com/SonoTommy/carrot-scan/stargazers)
 [![Downloads](https://img.shields.io/npm/dt/carrot-scan.svg)](https://www.npmjs.com/package/carrot-scan)
 
-
-## Installation
-
-Install carrot-scan globally using npm:
-
-```bash
-npm install -g carrot-scan
-```
-
-A **fast**, **extensible**, and **plugin-driven** code scanner for JavaScript, TypeScript, and any other file in your project.  
-It evaluates code quality, complexity, security vulnerabilities, and more, producing a **single aggregated score** (0–100) and actionable feedback.
-
 ## Features
 
-- 🛡️ **Critical patterns**: Immediately fails on destructive or remote‐execution hooks (`rm -rf`, `include()`, `eval()`, etc.).
-- 📏 **ESLint integration**: Runs ESLint (v9+) with recommended rules on JS/TS files.
-- 🔢 **Cyclomatic complexity**: Uses `typhonjs-escomplex` to penalize high-complexity code.
-- 🔍 **AST-based security**: Leverages `@nodesecure/js-x-ray` to detect injection patterns.
-- 🌐 **Multi-language rules**: Integrates Semgrep OWASP Top Ten rules for 35+ languages.
-- 🔎 **Heuristic scanning**: Regex-based patterns for generic vulnerabilities across all file types.
-- 🛠️ **Dependency audit**: Runs `npm audit` and scores known CVEs.
-- ⚙️ **Plugin architecture**: Easily add or remove checks by dropping in plugins under `plugins/`.
+- 🛡️ **Critical Pattern Detection**: Fails immediately on dangerous operations (`rm -rf`, `eval()`, dynamic `include()`, etc.).
+- 📏 **ESLint Integration**: Runs ESLint v9+ with recommended rules for JS/TS.
+- 🔢 **Cyclomatic Complexity**: Penalizes high-complexity code with `typhonjs-escomplex`.
+- 🔍 **AST‑based Security**: Uses `@nodesecure/js-x-ray` to find injection patterns.
+- 🌐 **OWASP Semgrep Rules**: Supports OWASP Top Ten checks across 35+ languages.
+- 🔎 **Heuristic Scanning**: Regex patterns for generic vulnerabilities in any file.
+- 🛠️ **Dependency Audit**: Aggregates `npm audit` CVE data into your score.
+- ⚙️ **Plugin‑driven**: Drop custom checks into `plugins/` without touching core code.
 
 ## Installation
 
@@ -41,9 +27,9 @@ Install globally via npm:
 
 ```bash
 npm install -g carrot-scan
-```
+````
 
-During development:
+Or clone for development:
 
 ```bash
 git clone https://github.com/SonoTommy/carrot-scan.git
@@ -58,10 +44,10 @@ npm link
 carrot-scan [options] <target>
 ```
 
-- `<target>`: File or directory to scan (defaults to current folder).
-- `-f, --fast`     : Quick scan (ESLint + heuristics only).
-- `-c, --complete` : Full scan (all checks).
-- `-j, --json`     : Output machine-readable JSON.
+* `<target>`: File or directory to scan (defaults to `.`).
+* `-f, --fast`     : Quick scan (ESLint + heuristics).
+* `-c, --complete` : Comprehensive scan (all plugins).
+* `-j, --json`     : Output JSON for CI pipelines.
 
 ### Examples
 
@@ -72,13 +58,11 @@ carrot-scan -f
 # Full scan on src/ directory
 carrot-scan src/ -c
 
-# JSON output for CI pipelines
+# JSON report for CI
 carrot-scan . -c --json > report.json
 ```
 
 ## API
-
-Use programmatically:
 
 ```js
 import { scan } from 'carrot-scan';
@@ -91,31 +75,26 @@ import { scan } from 'carrot-scan';
 
 ## Plugin Development
 
-Plugins live in the `plugins/` directory. Each plugin exports:
+Create a file under `plugins/` exporting:
 
-- `name`: string identifier.
-- `scope`: `'js' | 'all'` (files to apply to).
-- `applies(file: string)`: boolean.
-- `run(files: string[], context)`: `Promise<number>` of issue count.
-
-See existing plugins for examples:
-```bash
-plugins/
-├─ critical.js
-├─ eslint.js
-├─ complexity.js
-├─ xray.js
-├─ semgrep.js
-├─ heuristic.js
-└─ audit.js
+```js
+export default {
+  name: 'myPlugin',       // Unique identifier
+  scope: 'js' | 'all',     // File types
+  applies(file) { ... },   // Boolean filter
+  async run(files, ctx) {  // Return issue count
+    return 0;
+  }
+};
 ```
+
+Check existing plugins (`critical.js`, `eslint.js`, `complexity.js`, `xray.js`, `semgrep.js`, `heuristic.js`, `audit.js`) for guidance.
 
 ## Configuration
 
-Create `carrot-scan.config.js` in your project root to override weights, thresholds, or enable/disable plugins:
+Customize scanning via `carrot-scan.config.js` in project root:
 
 ```js
-// carrot-scan.config.js
 export default {
   weights: {
     eslint: 1.5,
@@ -133,20 +112,22 @@ export default {
 
 ## Contributing
 
-1. Fork the repository.
-2. Create your branch (`git checkout -b feature/my-check`).
-3. Make changes and add tests.
-4. Submit a pull request.
+1. Fork the repo
+2. Create a branch (`git checkout -b feature/your-check`)
+3. Add your changes and tests
+4. Open a Pull Request
 
-Please follow the existing code style and include unit tests for new plugins.
+Follow existing code style and include unit tests for new functionality.
 
-## ☕ Support my project
+## Support
 
-If you like carrot-scan and want to support its development, you can buy me a coffee:
+If you find **carrot-scan** useful, consider buying me a coffee:
 
-☕ (https://ko-fi.com/SonoTommy)
+☕ [ko-fi.com/SonoTommy](https://ko-fi.com/SonoTommy)
 
+---
 
-## License
+© 2025 Tommaso “Tommy”  |  [MIT License](LICENSE)
 
-© 2025 Tommaso “Tommy” [MIT License](LICENSE)
+```
+```

@@ -1,6 +1,6 @@
 {
   "name": "carrot-scan",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "hi",
   "main": "index.js",
   "bin": {
