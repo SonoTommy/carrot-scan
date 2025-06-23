@@ -4,11 +4,15 @@ import { globby } from 'globby';
 import escomplex from 'typhonjs-escomplex';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import xray from 'js-x-ray';   // CJS default export exposes .analyze()
+//import xray from 'js-x-ray';   // CJS default export exposes .analyze()
+import { AstAnalyser } from '@nodesecure/js-x-ray';
 import { createRequire } from 'node:module';
 const requireCJS = createRequire(import.meta.url);
 const eslintMain = requireCJS.resolve('eslint');
 const eslintBin = path.resolve(path.dirname(eslintMain), '../bin/eslint.js');
+
+//TEST
+const xray = new AstAnalyser();
 
 /**
  * Runs the ESLint CLI with recommended rules and returns total error count.
@@ -128,10 +132,10 @@ export async function scan(target, { mode = 'default' } = {}) {
   let xrayCount = 0;
   if (mode !== 'fast') {
     for (const file of jsFiles) {
-      const src = await fs.readFile(file, 'utf8');
-      const report = xray.analyze(src, { filename: file });
-      if (report.vulnerabilities && report.vulnerabilities.length) {
-        xrayCount += report.vulnerabilities.length;
+      // Analyse file on disk via NodeSecure AST analyser
+      const { warnings } = await xray.analyseFile(file);
+      if (warnings && warnings.length) {
+        xrayCount += warnings.length;
       }
     }
     xrayPenalty = xrayCount * 10;       // −10 points per finding
