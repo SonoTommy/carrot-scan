@@ -1,5 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { Plugin } from '../src/plugin-interface.js';
 
 const BAD_PATTERNS = [
   /eval\s*\(/gi,
@@ -27,16 +28,25 @@ function heuristicBadness(text) {
   }, 0);
 }
 
-export const heuristic = {
-  name: 'heuristic',
-  scope: 'all',
-  applies: () => true,
-  async run(files) {
-    let count = 0;
-    for (const f of files) {
-      const text = await fs.readFile(f, 'utf8');
-      count += heuristicBadness(text);
+export class HeuristicPlugin extends Plugin {
+  static pluginName = 'heuristic';
+
+  static applies() {
+    return true;
+  }
+
+  async run(filePath, { content }) {
+    const count = heuristicBadness(content);
+    if (count > 0) {
+      return [{
+        pluginName: this.constructor.pluginName,
+        filePath,
+        line: 0,
+        column: 0,
+        severity: 'warning',
+        message: `${count} heuristic issues detected`,
+      }];
     }
-    return count;
-  },
-};
+    return [];
+  }
+}

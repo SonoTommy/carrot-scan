@@ -2,18 +2,21 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
+import { Plugin } from '../src/plugin-interface.js';
 
 const requireCJS = createRequire(import.meta.url);
 const eslintMain = requireCJS.resolve('eslint');
 const eslintBin = path.resolve(path.dirname(eslintMain), '../bin/eslint.js');
 const exec = promisify(execFile);
 
-export const eslint = {
-  name: 'eslint',
-  scope: 'js',
-  applies: (file) => ['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs'].includes(path.extname(file)),
-  async run(files) {
-    if (!files.length) return 0;
+export class ESLintPlugin extends Plugin {
+  static pluginName = 'eslint';
+
+  static applies(file) {
+    return ['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs'].includes(path.extname(file));
+  }
+
+  async run(filePath, { content }) {
     try {
       const args = [
         '--no-eslintrc',
@@ -21,13 +24,24 @@ export const eslint = {
         'eslint:recommended',
         '--format',
         'json',
-        ...files,
+        filePath
       ];
       const { stdout } = await exec(eslintBin, args);
       const results = JSON.parse(stdout);
-      return results.reduce((sum, r) => sum + r.errorCount, 0);
+      const errorCount = results.reduce((sum, r) => sum + r.errorCount, 0);
+      if (errorCount > 0) {
+        return [{
+          pluginName: this.constructor.pluginName,
+          filePath,
+          line: 0,
+          column: 0,
+          severity: 'warning',
+          message: `${errorCount} ESLint error(s) found`
+        }];
+      }
     } catch {
-      return 0;
+      // ignore failures
     }
-  },
-};
+    return [];
+  }
+}

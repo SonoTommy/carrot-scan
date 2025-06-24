@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">10% </span>
+                <span class="strong">14.28% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>1/10</span>
+                <span class='fraction'>1/7</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">11.11% </span>
+                <span class="strong">14.28% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>1/9</span>
+                <span class='fraction'>1/7</span>
             </div>
         
             
@@ -82,7 +82,20 @@
 <a name='L17'></a><a href='#L17'>17</a>
 <a name='L18'></a><a href='#L18'>18</a>
 <a name='L19'></a><a href='#L19'>19</a>
-<a name='L20'></a><a href='#L20'>20</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L20'></a><a href='#L20'>20</a>
+<a name='L21'></a><a href='#L21'>21</a>
+<a name='L22'></a><a href='#L22'>22</a>
+<a name='L23'></a><a href='#L23'>23</a>
+<a name='L24'></a><a href='#L24'>24</a>
+<a name='L25'></a><a href='#L25'>25</a>
+<a name='L26'></a><a href='#L26'>26</a>
+<a name='L27'></a><a href='#L27'>27</a>
+<a name='L28'></a><a href='#L28'>28</a>
+<a name='L29'></a><a href='#L29'>29</a>
+<a name='L30'></a><a href='#L30'>30</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -91,35 +104,52 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import fs from 'node:fs/promises';
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { Plugin } from '../src/plugin-interface.js';
+import fs from 'node:fs/promises';
 import escomplex from 'typhonjs-escomplex';
 import path from 'node:path';
 &nbsp;
-export const complexity = {
-  name: 'complexity',
-  scope: 'js',
-  applies: <span class="fstat-no" title="function not covered" >(f</span>ile) =&gt; <span class="cstat-no" title="statement not covered" >['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs'].includes(path.extname(file)),</span>
-<span class="fstat-no" title="function not covered" >  as</span>ync run(files) {
-    let penalty = <span class="cstat-no" title="statement not covered" >0;</span>
-<span class="cstat-no" title="statement not covered" >    for (const f of files) {</span>
-      const src = <span class="cstat-no" title="statement not covered" >await fs.readFile(f, 'utf8');</span>
-      const report = <span class="cstat-no" title="statement not covered" >escomplex.analyzeModule(src);</span>
-      const cc = <span class="cstat-no" title="statement not covered" >report.aggregate.cyclomatic;</span>
-<span class="cstat-no" title="statement not covered" >      if (cc &gt; 10) <span class="cstat-no" title="statement not covered" >penalty += cc - 10;</span></span>
+&nbsp;
+export class ComplexityPlugin extends Plugin {
+  static pluginName = 'complexity';
+&nbsp;
+<span class="fstat-no" title="function not covered" >  st</span>atic applies(file) {
+<span class="cstat-no" title="statement not covered" >    return ['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs'].includes(path.extname(file));</span>
+  }
+&nbsp;
+<span class="fstat-no" title="function not covered" >  as</span>ync run(filePath, { content }) {
+    const report = <span class="cstat-no" title="statement not covered" >escomplex.analyzeModule(content);</span>
+    const cc = <span class="cstat-no" title="statement not covered" >report.aggregate.cyclomatic;</span>
+<span class="cstat-no" title="statement not covered" >    if (cc &gt; 10) {</span>
+<span class="cstat-no" title="statement not covered" >      return [{</span>
+        pluginName: this.constructor.pluginName,
+        filePath,
+        line: 0,
+        column: 0,
+        severity: 'warning',
+        message: `Cyclomatic complexity ${cc} exceeds threshold of 10`,
+      }];
     }
-<span class="cstat-no" title="statement not covered" >    return penalty;</span>
-  },
-};
+<span class="cstat-no" title="statement not covered" >    return [];</span>
+  }
+}
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -127,7 +157,7 @@ export const complexity = {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-06-24T10:04:43.039Z
+                at 2025-06-24T10:24:01.942Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

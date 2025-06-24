@@ -1,4 +1,5 @@
 import path from 'node:path';
+import { Plugin } from '../src/plugin-interface.js';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 
@@ -23,11 +24,25 @@ async function runNpmAudit(cwd) {
   }
 }
 
-export const audit = {
-  name: 'audit',
-  scope: 'all',
-  applies: () => true,
-  async run(_files, { target }) {
-    return await runNpmAudit(path.resolve(target));
-  },
-};
+export class AuditPlugin extends Plugin {
+  static pluginName = 'audit';
+
+  static applies() {
+    return true;
+  }
+
+  async run(_filePath, { target }) {
+    const auditScore = await runNpmAudit(path.resolve(target));
+    const severity = auditScore > 50 ? 'error' : auditScore > 20 ? 'warning' : 'info';
+    return [
+      {
+        pluginName: this.constructor.pluginName,
+        filePath: target,
+        line: 0,
+        column: 0,
+        severity,
+        message: `npm audit score: ${auditScore}`
+      }
+    ];
+  }
+}

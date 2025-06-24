@@ -1,18 +1,30 @@
 import { AstAnalyser } from '@nodesecure/js-x-ray';
 import path from 'node:path';
+import { Plugin } from '../src/plugin-interface.js';
+import fs from 'node:fs/promises';
 
 const xrayInstance = new AstAnalyser();
 
-export const xray = {
-  name: 'xray',
-  scope: 'js',
-  applies: (file) => ['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs'].includes(path.extname(file)),
-  async run(files) {
-    let count = 0;
-    for (const f of files) {
-      const { warnings } = await xrayInstance.analyseFile(f);
-      if (warnings) count += warnings.length;
+export class XrayPlugin extends Plugin {
+  static pluginName = 'xray';
+
+  static applies(filePath) {
+    return ['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs'].includes(path.extname(filePath));
+  }
+
+  async run(filePath, _content) {
+    const { warnings } = await xrayInstance.analyseFile(filePath);
+    const count = warnings ? warnings.length : 0;
+    if (count > 0) {
+      return [{
+        pluginName: this.constructor.pluginName,
+        filePath,
+        line: 0,
+        column: 0,
+        severity: 'warning',
+        message: `${count} AST warnings detected`,
+      }];
     }
-    return count;
-  },
-};
+    return [];
+  }
+}
