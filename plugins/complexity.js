@@ -5,7 +5,7 @@ import path from 'node:path';
 export const complexity = {
   name: 'complexity',
   scope: 'js',
-  applies: file => ['.js','.jsx','.ts','.tsx','.mjs','.cjs'].includes(path.extname(file)),
+  applies: (file) => ['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs'].includes(path.extname(file)),
   async run(files) {
     let penalty = 0;
     for (const f of files) {

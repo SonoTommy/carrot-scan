@@ -16,13 +16,13 @@ const plugins = [critical, eslint, complexity, xray, semgrep, heuristic, audit];
 
 // Default weightings (can override via config file)
 const defaultWeights = {
-  critical:   50,   // immediate-fail severity
-  eslint:     2,    // per error
-  complexity: 1,    // per point over threshold
-  xray:       8,    // per warning
-  semgrep:    5,    // per finding
-  heuristic:  3,    // per pattern
-  audit:      4,    // per vuln severity unit
+  critical: 50, // immediate-fail severity
+  eslint: 2, // per error
+  complexity: 1, // per point over threshold
+  xray: 8, // per warning
+  semgrep: 5, // per finding
+  heuristic: 3, // per pattern
+  audit: 4, // per vuln severity unit
 };
 
 /**
@@ -34,22 +34,41 @@ export async function scan(target, { mode = 'default' } = {}) {
   // 1. File discovery
   const stats = await fs.stat(target);
   const allFiles = stats.isDirectory()
-    ? await globby(['**/*'], { cwd: target, gitignore: true, absolute: true, onlyFiles: true, dot: true })
+    ? await globby(['**/*'], {
+        cwd: target,
+        gitignore: true,
+        absolute: true,
+        onlyFiles: true,
+        dot: true,
+      })
     : [path.resolve(target)];
-  if (!allFiles.length) return { target, mode, score: 100, rating: 'good', messages: ['No files to scan'], exitCode: 0 };
+  if (!allFiles.length)
+    return {
+      target,
+      mode,
+      score: 100,
+      rating: 'good',
+      messages: ['No files to scan'],
+      exitCode: 0,
+    };
 
   // 2. Plugin results collection
   const results = [];
   for (const plugin of plugins) {
-    const files = plugin.scope === 'js'
-      ? allFiles.filter(f => plugin.applies(f))
-      : allFiles;
+    const files = plugin.scope === 'js' ? allFiles.filter((f) => plugin.applies(f)) : allFiles;
     if (!files.length) continue;
     const count = await plugin.run(files, { target, mode });
     results.push({ name: plugin.name, count });
     if (plugin.name === 'critical' && count > 0) {
       // Immediate fail on critical patterns
-      return { target, mode, score: 0, rating: 'bad', messages: [`${count} critical issues`] , exitCode: 2 };
+      return {
+        target,
+        mode,
+        score: 0,
+        rating: 'bad',
+        messages: [`${count} critical issues`],
+        exitCode: 2,
+      };
     }
   }
 
@@ -67,11 +86,23 @@ export async function scan(target, { mode = 'default' } = {}) {
   score = Math.max(0, score);
 
   // 4. Final verdict
-  const rating = score >= 90 ? 'excellent'
-               : score >= 75 ? 'good'
-               : score >= 50 ? 'fair'
-               : score >= 25 ? 'poor'
-               : 'bad';
+  const rating =
+    score >= 90
+      ? 'excellent'
+      : score >= 75
+        ? 'good'
+        : score >= 50
+          ? 'fair'
+          : score >= 25
+            ? 'poor'
+            : 'bad';
 
-  return { target, mode, score, rating, messages, exitCode: rating === 'bad' ? 2 : rating === 'poor' ? 1 : 0 };
+  return {
+    target,
+    mode,
+    score,
+    rating,
+    messages,
+    exitCode: rating === 'bad' ? 2 : rating === 'poor' ? 1 : 0,
+  };
 }

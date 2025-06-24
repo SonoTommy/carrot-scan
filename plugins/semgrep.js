@@ -11,9 +11,7 @@ export const semgrep = {
   async run(_files, { target }) {
     try {
       const cmd = process.platform === 'win32' ? 'npx.cmd' : 'npx';
-      const args = [
-        'semgrep', '--quiet', '--json', '--config', 'p/owasp-top-ten', target
-      ];
+      const args = ['semgrep', '--quiet', '--json', '--config', 'p/owasp-top-ten', target];
       const { stdout } = await exec(cmd, args, { cwd: process.cwd(), maxBuffer: 10 * 1024 * 1024 });
       const report = JSON.parse(stdout);
       return Array.isArray(report.results) ? report.results.length : 0;

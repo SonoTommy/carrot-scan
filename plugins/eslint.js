@@ -11,14 +11,16 @@ const exec = promisify(execFile);
 export const eslint = {
   name: 'eslint',
   scope: 'js',
-  applies: file => ['.js','.jsx','.ts','.tsx','.mjs','.cjs'].includes(path.extname(file)),
+  applies: (file) => ['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs'].includes(path.extname(file)),
   async run(files) {
     if (!files.length) return 0;
     try {
       const args = [
         '--no-eslintrc',
-        '--config', 'eslint:recommended',
-        '--format', 'json',
+        '--config',
+        'eslint:recommended',
+        '--format',
+        'json',
         ...files,
       ];
       const { stdout } = await exec(eslintBin, args);

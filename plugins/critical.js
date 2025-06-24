@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 
 export const critical = {
   name: 'critical',
-  scope: 'all',           // scans all files
+  scope: 'all', // scans all files
   applies: () => true,
   async run(allFiles) {
     const patterns = [

@@ -9,10 +9,12 @@ async function runNpmAudit(cwd) {
     const { stdout } = await exec('npm', ['audit', '--json'], { cwd });
     const audit = JSON.parse(stdout);
     const vulns = audit.vulnerabilities || audit;
-    let critical = 0, high = 0, moderate = 0;
+    let critical = 0,
+      high = 0,
+      moderate = 0;
     for (const v of Object.values(vulns)) {
       critical += v.critical || 0;
-      high     += v.high     || 0;
+      high += v.high || 0;
       moderate += v.moderate || 0;
     }
     return critical * 5 + high * 5 + moderate * 2;

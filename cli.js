@@ -24,19 +24,21 @@ program
       } else {
         // colourful human output
         const paint =
-          result.rating === 'good'     ? chalk.green :
-          result.rating === 'not good' ? chalk.yellow :
-                                          chalk.red;
+          result.rating === 'good'
+            ? chalk.green
+            : result.rating === 'not good'
+              ? chalk.yellow
+              : chalk.red;
 
         console.log(paint(`${result.rating.toUpperCase()}  (score: ${result.score}/100)`));
-        result.messages.forEach(m => console.log(`• ${m}`));
+        result.messages.forEach((m) => console.log(`• ${m}`));
       }
 
       // exit codes: 0 good, 1 not good, 2 bad
       process.exitCode = result.exitCode;
     } catch (err) {
       console.error(chalk.red(err.message));
-      process.exitCode = 3;           // unexpected error
+      process.exitCode = 3; // unexpected error
     }
   });
 
