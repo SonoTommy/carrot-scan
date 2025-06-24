@@ -1,6 +1,6 @@
 {
   "name": "carrot-scan",
-  "version": "1.0.4",
+  "version": "1.0.6",
   "description": "Command-line tool for detecting vulnerabilities in files and directories.",
   "main": "index.js",
   "bin": {
@@ -13,7 +13,21 @@
   "keywords": [
     "scanner",
     "quality",
-    "cli"
+    "cli",
+    "antivirus",
+    "cybersecurity",
+    "js",
+    "cli-tool",
+    "antivirus",
+    "scan",
+    "terminal",
+    "api",
+    "fast",
+    "easy",
+    "module",
+    "scanning",
+    "malware-analysis",
+    "malware analysis"
   ],
   "author": "SonoTommy [https://github.com/SonoTommy]",
   "repository":{
