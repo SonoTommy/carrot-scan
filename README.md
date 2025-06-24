@@ -62,6 +62,7 @@ carrot-scan [options] <target>
 - `-f, --fast`     : Quick scan (ESLint + heuristics only).
 - `-c, --complete` : Full scan (all checks).
 - `-j, --json`     : Output machine-readable JSON.
+- v, --version   : Show the installed version of carrot-scan.
 
 ### Examples
 
@@ -74,6 +75,22 @@ carrot-scan src/ -c
 
 # JSON output for CI pipelines
 carrot-scan . -c --json > report.json
+```
+
+```bash
+# Scan a single file
+carrot-scan path/to/file.js -c
+
+# Display version
+carrot-scan --version
+```
+
+### Advanced Configuration
+
+You can specify a custom configuration file:
+
+```bash
+carrot-scan -c --config path/to/carrot-scan.config.js
 ```
 
 ## API
@@ -109,6 +126,8 @@ plugins/
 ├─ heuristic.js
 └─ audit.js
 ```
+
+For a template to create your own plugin, see `plugins/template.js`.
 
 ## Configuration
 
