@@ -49,7 +49,7 @@ export async function scan(target, { mode = 'default' } = {}) {
   // 2. Plugin results collection
   const pluginResults = [];
   for (const plugin of plugins) {
-    const matchingFiles = allFiles.filter((f) => plugin.constructor.applies(f));
+    const matchingFiles = allFiles;
     if (!matchingFiles.length) continue;
 
     for (const filePath of matchingFiles) {
