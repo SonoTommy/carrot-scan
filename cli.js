@@ -11,12 +11,13 @@ program
   .option('-c, --complete', 'run a complete scan (deeper, slower)')
   .option('-d, --default', 'run the default scan (same as no flag)')
   .option('-j, --json', 'output raw JSON (good for CI)')
+  .option('-i, --incremental', 'scan only changed files in the last commit')
   .action(async (target, opts) => {
     // pick the first non-undefined flag; default otherwise
     const mode = opts.fast ? 'fast' : opts.complete ? 'complete' : 'default';
 
     try {
-      const result = await scan(target, { mode });
+      const result = await scan(target, { mode, incremental: opts.incremental });
 
       if (opts.json) {
         // machine‑readable output

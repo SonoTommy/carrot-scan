@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { globby } from 'globby';
+import { execSync } from 'node:child_process';
 
 import { CriticalPlugin } from './plugins/critical.js';
 import { ESLintPlugin } from './plugins/eslint.js';
@@ -33,14 +34,25 @@ const defaultWeights = {
 /**
  * Scan entrypoint
  * @param {string} target - file or directory
- * @param {{mode?: string}} opts
+ * @param {{mode?: string, incremental?: boolean}} opts
  */
-export async function scan(target, { mode = 'default' } = {}) {
+export async function scan(target, { mode = 'default', incremental = false } = {}) {
   // 1. File discovery
   const stats = await fs.stat(target);
-  const allFiles = stats.isDirectory()
-    ? await globby(['**/*'], { cwd: target, gitignore: true, absolute: true, onlyFiles: true, dot: true })
-    : [path.resolve(target)];
+  // If incremental mode, only include files changed in the last commit
+  let allFiles;
+  if (incremental && stats.isDirectory()) {
+    const changed = execSync('git diff --name-only HEAD~1', { cwd: target })
+      .toString()
+      .split('\n')
+      .filter(Boolean)
+      .map(f => path.resolve(target, f));
+    allFiles = changed;
+  } else {
+    allFiles = stats.isDirectory()
+      ? await globby(['**/*'], { cwd: target, gitignore: true, absolute: true, onlyFiles: true, dot: true })
+      : [path.resolve(target)];
+  }
 
   if (!allFiles.length) {
     return { target, mode, score: 100, rating: 'good', messages: ['No files to scan'], exitCode: 0 };
@@ -49,7 +61,9 @@ export async function scan(target, { mode = 'default' } = {}) {
   // 2. Plugin results collection
   const pluginResults = [];
   for (const plugin of plugins) {
-    const matchingFiles = allFiles;
+    const matchingFiles = allFiles.filter(filePath =>
+      plugin.constructor.applies(filePath)
+    );
     if (!matchingFiles.length) continue;
 
     for (const filePath of matchingFiles) {
