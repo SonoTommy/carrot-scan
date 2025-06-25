@@ -29,6 +29,12 @@ Install carrot-scan globally using npm:
 npm install -g carrot-scan
 ```
 
+or using yarn
+
+```bash
+yarn global add carrot-scan
+```
+
 A **fast**, **extensible**, and **plugin-driven** code scanner for JavaScript, TypeScript, and any other file in your project.  
 It evaluates code quality, complexity, security vulnerabilities, and more, producing a **single aggregated score** (0–100) and actionable feedback.
 
