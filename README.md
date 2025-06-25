@@ -13,6 +13,14 @@
 [![Downloads](https://img.shields.io/npm/dt/carrot-scan.svg)](https://www.npmjs.com/package/carrot-scan)
 
 
+
+> **⚠️ Disclaimer:**
+> Carrot-scan is currently under active development and may produce inaccurate or incomplete results.
+> Use this tool at your own risk. The author assumes no liability for any direct or indirect damages arising from its use.
+> This software is provided “as is,” without warranty of any kind, express or implied, including but not limited to warranties of merchantability or fitness for a particular purpose.
+> Always review and verify scan findings manually before making any decisions based on its output.
+
+
 ## Installation
 
 Install carrot-scan globally using npm:
