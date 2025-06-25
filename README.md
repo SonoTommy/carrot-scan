@@ -118,6 +118,25 @@ import { scan } from 'carrot-scan';
   const result = await scan('src/', { mode: 'complete' });
   console.log(result);
 })();
+
+
+### HTTP/REST API
+
+Invoke the scan via HTTP POST and receive JSON:
+
+```bash
+curl -X POST http://localhost:3000/scan \
+  -H 'Content-Type: application/json' \
+  -d '{"target":"./src","mode":"fast"}'
+```
+
+### Streaming API
+
+Use Server-Sent Events to receive live progress updates:
+
+```bash
+curl -N "http://localhost:3000/scan/stream?target=./src&mode=fast"
+```
 ```
 
 ## Plugin Development
