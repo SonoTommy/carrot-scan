@@ -1,8 +1,9 @@
 {
   "name": "carrot-scan",
-  "version": "1.1.7",
+  "version": "1.2.0",
   "description": "Command-line tool for detecting vulnerabilities in files and directories.",
   "main": "index.js",
+  "types": "index.d.ts",
   "bin": {
     "carrot-scan": "./cli.js"
   },
@@ -11,7 +12,18 @@
     "test": "node --experimental-vm-modules node_modules/.bin/jest --config jest.config.mjs --coverage",
     "lint": "eslint \"**/*.{js,ts}\" --config .eslintrc.cjs",
     "lint:fix": "eslint \"**/*.{js,ts}\" --config .eslintrc.cjs --fix",
-    "format": "prettier --write \"**/*.{js,ts,json,md}\""
+    "format": "prettier --write \"**/*.{js,ts,json,md}\"",
+    "start-api": "node ./src/api.js"
+  },
+  "exports": {
+    ".": {
+      "import": "./index.js",
+      "require": "./index.js"
+    },
+    "./api": {
+      "import": "./src/api.js",
+      "require": "./src/api.js"
+    }
   },
   "keywords": [
     "scanner",
@@ -67,14 +79,18 @@
   "license": "MIT",
   "dependencies": {
     "@eslint/js": "^9.29.0",
+    "@fastify/swagger": "^6.1.1",
+    "@fastify/swagger-ui": "^4.2.0",
     "@nodesecure/js-x-ray": "^9.0.0",
     "chalk": "^5.4.1",
     "commander": "^14.0.0",
+    "fastify": "^4.29.1",
     "globby": "^14.1.0",
-    "typhonjs-escomplex": "^0.1.0"
+    "typhonjs-escomplex": "^0.1.0",
+    "yaml": "^2.8.0"
   },
   "devDependencies": {
-    "eslint": "^8.57.1",
+    "eslint": "^9.29.0",
     "eslint-config-prettier": "^10.1.5",
     "eslint-plugin-prettier": "^5.5.0",
     "eslint-plugin-security": "^3.0.1",

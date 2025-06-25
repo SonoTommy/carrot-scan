@@ -1,0 +1,101 @@
+openapi: 3.1.0
+info:
+  title: Carrot-Scan API
+  version: 1.2.0
+paths:
+  /scan:
+    post:
+      summary: Run a vulnerability scan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - target
+              properties:
+                target:
+                  oneOf:
+                    - type: string
+                    - type: array
+                      items:
+                        type: string
+                mode:
+                  type: string
+                  enum: [fast, complete]
+                json:
+                  type: boolean
+      responses:
+        '200':
+          description: scan results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScanResult'
+  /scan/stream:
+    get:
+      summary: Stream scan progress via Server-Sent Events
+      parameters:
+        - in: query
+          name: target
+          required: true
+          schema:
+            oneOf:
+              - type: string
+              - type: array
+                items:
+                  type: string
+        - in: query
+          name: mode
+          schema:
+            type: string
+            enum: [fast, complete]
+        - in: query
+          name: json
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: SSE event stream of scan progress
+          content:
+            text/event-stream:
+              schema:
+                type: string
+components:
+  schemas:
+    ScanResult:
+      type: object
+      properties:
+        overallScore:
+          type: number
+        pluginResults:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/PluginResult'
+        issues:
+          type: array
+          items:
+            $ref: '#/components/schemas/Issue'
+        durationMs:
+          type: number
+    PluginResult:
+      type: object
+      properties:
+        count:
+          type: number
+        details:
+          type: array
+          items:
+            type: string
+    Issue:
+      type: object
+      properties:
+        file:
+          type: string
+        line:
+          type: number
+        message:
+          type: string
+        plugin:
+          type: string
