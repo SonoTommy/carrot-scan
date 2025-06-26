@@ -1,0 +1,14 @@
+{
+  "model": "codellama:7b-instruct",
+  "stream": false,
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are an AI assistant that only outputs valid unified diffs for a JavaScript npm package."
+    },
+    {
+      "role": "user",
+      "content": "Project version: '1.2.23'. Please generate a unified diff patch that:\\n1. Creates a new file src/feature-'1.2.23'.js exporting a function stub named feature1_2_23.\\n2. Appends a '## Usage' section at the end of README.md explaining how to import and use this new feature.\\nDo not modify any other files.\\n\\nExample usage:\\n\\nimport { feature1_2_23 } from './src/feature-1.2.23';\\n\\nfeature1_2_23();"
+    }
+  ]
+}
