@@ -1,16 +1,20 @@
 import js from '@eslint/js';
 import * as importPlugin from 'eslint-plugin-import';
 import prettier from 'eslint-plugin-prettier';
+import globals from 'globals'; // 👈 nuovo
 
 // Recommended rules from eslint‑plugin‑import (converted for flat config)
 const importRecommendedRules = importPlugin.configs.recommended.rules;
-const nodeEnv = js.environments.node;
 
-// eslint-disable-next-line no-unused-vars
 const { root: _unused, ...eslintRecommendedNoRoot } = js.configs.recommended;
 
 export default [
-  nodeEnv, // Node environment globals
+  {
+    // 👈 blocco per i globali Node
+    languageOptions: {
+      globals: globals.node,
+    },
+  },
   eslintRecommendedNoRoot, // base ESLint rules (root key removed)
   {
     plugins: {
