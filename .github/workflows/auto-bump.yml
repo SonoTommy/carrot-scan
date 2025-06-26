@@ -47,7 +47,7 @@ jobs:
           echo "new-version=$VERSION" >> $GITHUB_OUTPUT
           echo "sanitized-version=$SANITIZED_VERSION" >> $GITHUB_OUTPUT
 
-      - name: Install & fix
+      - name: Install & format
         run: |
           npm install
           # esegui Prettier o simili, se configurato:
@@ -124,3 +124,45 @@ jobs:
       #   with:
       #     github_token: ${{ secrets.GH_PAT }}
       #     merge_method: squash
+
+  auto-fix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_PAT }}
+          fetch-depth: 0
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Format & lint (fix)
+        run: |
+          npx prettier . --write
+          npx eslint . --fix
+
+      - name: Commit & push changes
+        uses: stefanzweifel/git-auto-commit-action@v6
+        with:
+          branch: auto-fix
+          create_branch: true
+          commit_message: "style: auto-lint & format [skip ci]"
+          push_options: '--force-with-lease'
+          status_options: '-uno'
+
+      - name: Create / update PR
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GH_PAT }}
+          commit-message: "style: auto-lint & format"
+          branch: auto-fix
+          title: "♻️ Auto-lint & format"
+          body: |
+            This PR is generated automatically every 10 minutes.
+            It fixes lint errors and applies Prettier formatting.
