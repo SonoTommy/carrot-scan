@@ -93,7 +93,16 @@ jobs:
             ]
           }
           EOF
-          jq -r '.message.content' ai_response.json > ai_patch.diff || true
+          jq -r '.message.content' ai_response.json > ai_raw.txt || true
+
+          # Extract unified‑diff content if wrapped in markdown fences
+          awk 'BEGIN{code=0} /^\`\`\`diff/{code=1;next} /^\`\`\`/{code=0} code' ai_raw.txt > ai_patch.diff || true
+
+          # Fallback: if no content extracted (no fences), use the raw text
+          if [ ! -s ai_patch.diff ]; then
+            cp ai_raw.txt ai_patch.diff
+          fi
+
           if [ -s ai_patch.diff ]; then
             echo "==> Applying patch"
             cat ai_patch.diff
