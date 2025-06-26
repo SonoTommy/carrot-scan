@@ -5,9 +5,9 @@ permissions:
   pull-requests: write
 
 on:
-  # Pianificato: ogni 10 minuti UTC (6 volte all’ora, modifica il cron se vuoi)
+  # Pianificato: ogni ora UTC (24 volte al giorno, modifica il cron se vuoi)
   schedule:
-    - cron: '*/10 * * * *'
+    - cron: '0 * * * *'
   # Permette di far partire manualmente il workflow dal tab Actions
   workflow_dispatch:
 
@@ -72,8 +72,8 @@ jobs:
             - Lint/format fixes applied
           labels: automated, bump
 
-      - name: Merge pull request
-        uses: peter-evans/merge-pull-request@v2
+      - name: Enable PR Auto-merge
+        uses: peter-evans/enable-pull-request-automerge@v3
         with:
           token: ${{ secrets.GH_PAT }}
           pull-request-number: ${{ steps.create_pr.outputs.pull_request_number }}
