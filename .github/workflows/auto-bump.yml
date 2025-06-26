@@ -61,7 +61,7 @@ jobs:
           echo "Starting LocalAI in detached mode..."
           docker run -d --name localai -p 8080:8080 \
             -e HUGGINGFACE_API_TOKEN=${{ secrets.HF_TOKEN }} \
-            -e "MODELS=codellama:7b-instruct" \
+            -e "MODELS=llama-cpp/CodeLlama-7B-Instruct-GGUF" \
             localai/localai:latest
           echo "Waiting for LocalAI to be ready..."
           for i in $(seq 1 60); do
