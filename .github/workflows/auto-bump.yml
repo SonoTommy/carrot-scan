@@ -30,8 +30,13 @@ jobs:
       - name: Bump patch version
         id: bump
         run: |
-          # bump patch (es. 1.2.2 → 1.2.3) e crea commit
-          npm version patch -m "chore(release): bump version to %s"
+          # bump patch and capture new version (e.g. "v1.2.3")
+          BUMP_OUTPUT=$(npm version patch -m "chore(release): bump version to %s")
+          # strip leading "v"
+          VERSION=${BUMP_OUTPUT#v}
+          echo "New version: $VERSION"
+          # set GitHub Actions output
+          echo "new-version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Install & fix
         run: |
@@ -53,7 +58,7 @@ jobs:
         with:
           # se preferisci push diretto su main, sostituisci con actions/github-script o github-push-action
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: ${{ steps.bump.outputs.new-version }}
+          commit-message: "chore(release): bump version to ${{ steps.bump.outputs.new-version }}"
           branch: auto-bump-${{ steps.bump.outputs.new-version }}
           title: "🔼 Bump to ${{ steps.bump.outputs.new-version }}"
           body: |
