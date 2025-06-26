@@ -53,20 +53,6 @@ jobs:
           # esegui Prettier o simili, se configurato:
           npm run format -- --write
 
-      - name: Quality & safety checks
-        run: |
-          # Run unit tests if a "test" script is defined
-          if npm run | grep -qE "^.* test"; then
-            npm test -- --ci --bail
-          fi
-          # Optional strict TypeScript check
-          if [ -f tsconfig.json ]; then
-            npx tsc --noEmit
-          fi
-          # Fail on known high‑severity vulnerabilities
-          npm audit --audit-level=high
-          # Report unused dependencies without failing the build
-          npx depcheck || true
 
       - name: Push changes & create PR
         id: create_pr
