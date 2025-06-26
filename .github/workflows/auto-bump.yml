@@ -1,0 +1,69 @@
+name: Auto Bump & Fix
+
+on:
+  # Pianificato: ogni ora UTC (24 volte al giorno, modifica il cron se vuoi)
+  schedule:
+    - cron: '0 * * * *'
+  # Permette di far partire manualmente il workflow dal tab Actions
+  workflow_dispatch:
+
+jobs:
+  bump-patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0   # necessario per tag/commit history
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Bump patch version
+        id: bump
+        run: |
+          # bump patch (es. 1.2.2 → 1.2.3) e crea commit
+          npm version patch -m "chore(release): bump version to %s"
+
+      - name: Install & fix
+        run: |
+          npm install
+          # esegue lint con --fix, se hai ESLint:
+          npm run lint -- --fix || true
+          # esegui Prettier o simili, se configurato:
+          npm run format -- --write || true
+
+      - name: Commit lint/format fixes
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git add .
+            git commit -m "chore: apply lint/format fixes" || echo "No fixes to commit"
+          fi
+
+      - name: Push changes & create PR
+        uses: peter-evans/create-pull-request@v5
+        with:
+          # se preferisci push diretto su main, sostituisci con actions/github-script o github-push-action
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: ${{ steps.bump.outputs.new-version }}
+          branch: auto-bump-${{ steps.bump.outputs.new-version }}
+          title: "🔼 Bump to ${{ steps.bump.outputs.new-version }}"
+          body: |
+            - Version bumped automatically  
+            - Lint/format fixes applied
+          labels: automated, bump
+
+      # -- Opzionale: se vuoi auto-merge quando CI è verde --
+      # - name: Auto-merge PR
+      #   uses: pascalgn/automerge-action@v0.15.4
+      #   with:
+      #     github_token: ${{ secrets.GITHUB_TOKEN }}
+      #     merge_method: squash
