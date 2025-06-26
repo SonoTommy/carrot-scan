@@ -20,14 +20,16 @@ export class SemgrepPlugin extends Plugin {
       const report = JSON.parse(stdout);
       const count = Array.isArray(report.results) ? report.results.length : 0;
       if (count > 0) {
-        return [{
-          pluginName: this.constructor.pluginName,
-          filePath: target,
-          line: 0,
-          column: 0,
-          severity: 'warning',
-          message: `${count} semgrep issues detected`,
-        }];
+        return [
+          {
+            pluginName: this.constructor.pluginName,
+            filePath: target,
+            line: 0,
+            column: 0,
+            severity: 'warning',
+            message: `${count} semgrep issues detected`,
+          },
+        ];
       }
     } catch {
       // ignore

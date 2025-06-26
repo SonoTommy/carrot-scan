@@ -16,14 +16,16 @@ export class XrayPlugin extends Plugin {
     const { warnings } = await xrayInstance.analyseFile(filePath);
     const count = warnings ? warnings.length : 0;
     if (count > 0) {
-      return [{
-        pluginName: this.constructor.pluginName,
-        filePath,
-        line: 0,
-        column: 0,
-        severity: 'warning',
-        message: `${count} AST warnings detected`,
-      }];
+      return [
+        {
+          pluginName: this.constructor.pluginName,
+          filePath,
+          line: 0,
+          column: 0,
+          severity: 'warning',
+          message: `${count} AST warnings detected`,
+        },
+      ];
     }
     return [];
   }

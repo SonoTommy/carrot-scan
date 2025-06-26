@@ -6,12 +6,10 @@
   <br><a href="https://github.com/SonoTommy/carrot-scan">GitHub Repository</a>
 </p>
 
-
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://raw.githubusercontent.com/SonoTommy/carrot-scan/refs/heads/main/LICENSE)
 [![GitHub issues](https://img.shields.io/github/issues/SonoTommy/carrot-scan.svg)](https://github.com/SonoTommy/carrot-scan/issues)
 [![GitHub stars](https://img.shields.io/github/stars/SonoTommy/carrot-scan.svg?style=social&label=Stars)](https://github.com/SonoTommy/carrot-scan/stargazers)
 [![Downloads](https://img.shields.io/npm/dt/carrot-scan.svg)](https://www.npmjs.com/package/carrot-scan)
-
 
 ## Installation
 
@@ -65,10 +63,10 @@ carrot-scan [options] <target>
 ```
 
 - `<target>`: File or directory to scan (defaults to current folder).
-- `-f, --fast`     : Quick scan (ESLint + heuristics only).
+- `-f, --fast` : Quick scan (ESLint + heuristics only).
 - `-c, --complete` : Full scan (all checks).
-- `-j, --json`     : Output machine-readable JSON.
-- v, --version   : Show the installed version of carrot-scan.
+- `-j, --json` : Output machine-readable JSON.
+- v, --version : Show the installed version of carrot-scan.
 
 ### Examples
 
@@ -103,7 +101,7 @@ carrot-scan -c --config path/to/carrot-scan.config.js
 
 Use programmatically:
 
-```js
+````js
 import { scan } from 'carrot-scan';
 
 (async () => {
@@ -120,7 +118,7 @@ Invoke the scan via HTTP POST and receive JSON:
 curl -X POST http://localhost:3000/scan \
   -H 'Content-Type: application/json' \
   -d '{"target":"./src","mode":"fast"}'
-```
+````
 
 ### Streaming API
 
@@ -129,7 +127,8 @@ Use Server-Sent Events to receive live progress updates:
 ```bash
 curl -N "http://localhost:3000/scan/stream?target=./src&mode=fast"
 ```
-```
+
+````
 
 ## Plugin Development
 
@@ -150,7 +149,7 @@ plugins/
 ├─ semgrep.js
 ├─ heuristic.js
 └─ audit.js
-```
+````
 
 For a template to create your own plugin, see `plugins/template.js`.
 
@@ -164,14 +163,14 @@ export default {
   weights: {
     eslint: 1.5,
     xray: 10,
-    audit: 5
+    audit: 5,
   },
   thresholds: {
-    complexity: 12
+    complexity: 12,
   },
   plugins: {
-    semgrep: { enabled: false }
-  }
+    semgrep: { enabled: false },
+  },
 };
 ```
 
@@ -189,7 +188,6 @@ Please follow the existing code style and include unit tests for new plugins.
 If you like carrot-scan and want to support its development, you can buy me a coffee:
 
 ☕ (https://ko-fi.com/SonoTommy)
-
 
 > **⚠️ Disclaimer:**
 > Carrot-scan is currently under active development and may produce inaccurate or incomplete results.

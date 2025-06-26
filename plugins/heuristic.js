@@ -38,14 +38,16 @@ export class HeuristicPlugin extends Plugin {
   async run(filePath, { content }) {
     const count = heuristicBadness(content);
     if (count > 0) {
-      return [{
-        pluginName: this.constructor.pluginName,
-        filePath,
-        line: 0,
-        column: 0,
-        severity: 'warning',
-        message: `${count} heuristic issues detected`,
-      }];
+      return [
+        {
+          pluginName: this.constructor.pluginName,
+          filePath,
+          line: 0,
+          column: 0,
+          severity: 'warning',
+          message: `${count} heuristic issues detected`,
+        },
+      ];
     }
     return [];
   }
