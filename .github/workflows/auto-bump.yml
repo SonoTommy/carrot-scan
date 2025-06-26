@@ -5,9 +5,9 @@ permissions:
   pull-requests: write
 
 on:
-  # Pianificato: ogni ora UTC (24 volte al giorno, modifica il cron se vuoi)
+  # Pianificato: ogni 10 minuti UTC (6 volte all’ora, modifica il cron se vuoi)
   schedule:
-    - cron: '0 * * * *'
+    - cron: '*/10 * * * *'
   # Permette di far partire manualmente il workflow dal tab Actions
   workflow_dispatch:
 
