@@ -27,7 +27,7 @@ jobs:
     #    phips28/gh-action-bump-version restituisce:
     #       newTag  (v1.2.3)  e newVersion (1.2.3)
     - id: bump
-      uses: phips28/gh-action-bump-version@v11
+      uses: phips28/gh-action-bump-version@v11.1.1   # latest v11 release
       with:
         tag-prefix: "v"
         minor-wording: ""     # disattiva minor/major automatici
