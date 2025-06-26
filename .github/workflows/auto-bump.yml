@@ -58,6 +58,27 @@ jobs:
             git commit -m "chore: apply lint/format fixes" || echo "No fixes to commit"
           fi
 
+      - name: AI Code Enhancements
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          # Query OpenAI to generate additional feature stubs and doc improvements
+          RESPONSE=$(curl https://api.openai.com/v1/chat/completions \
+            -H "Authorization: Bearer $OPENAI_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "model": "gpt-4o-mini",
+              "messages": [
+                {"role": "system", "content": "You are an AI assistant that improves code by adding new features and updating documentation without removing existing code."},
+                {"role": "user", "content": "Project version: '${{ steps.bump.outputs.new-version }}'. Please generate a simple new feature stub or function in the codebase, update README with usage instructions, and output a unified diff."}
+              ]
+            }')
+          # Apply AI-generated patch if present
+          echo "$RESPONSE" | jq -r '.choices[0].message.content' > ai_patch.diff
+          git apply ai_patch.diff || echo "No AI patch applied"
+          git add .
+          git commit -m "feat(ai): apply AI-generated enhancements for version ${{ steps.bump.outputs.new-version }}" || echo "No AI enhancements"
+
       - name: Push changes & create PR
         id: create_pr
         uses: peter-evans/create-pull-request@v5
