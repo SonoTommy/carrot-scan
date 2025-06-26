@@ -68,7 +68,10 @@ jobs:
       - name: Install llama.cpp
         run: |
           git clone https://github.com/ggerganov/llama.cpp
-          cd llama.cpp && make
+          cd llama.cpp
+          mkdir build && cd build
+          cmake -DCMAKE_BUILD_TYPE=Release ..
+          cmake --build .
 
       - name: AI Code Enhancements (local LLM via llama.cpp)
         run: |
