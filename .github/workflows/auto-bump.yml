@@ -172,57 +172,6 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Push changes & create PR
-        id: create_pr
-        uses: peter-evans/create-pull-request@v5
-        with:
-          # se preferisci push diretto su main, sostituisci con actions/github-script o github-push-action
-          token: ${{ secrets.GH_PAT }}
-          commit-message: "chore(release): bump version to ${{ steps.bump.outputs.new-version }}"
-          branch: auto-bump-${{ steps.bump.outputs.new-version }}
-          title: "🔼 Bump to ${{ steps.bump.outputs.new-version }}"
-          body: |
-            - Version bumped automatically  
-            - Lint/format fixes applied
-
-            ## Usage
-
-            After every automatic bump, the workflow generates a convenience stub that matches the new version number.  
-            Import it and call it as shown below ‑ just replace **X.Y.Z** with the package version you are using.
-
-            ```js
-            import { featureX_Y_Z } from './src/feature-X.Y.Z.js';
-
-            featureX_Y_Z();
-            ```
-          labels: automated, bump
-
-      - name: Enable PR Auto-merge
-        if: ${{ steps.create_pr.outputs.pull-request-number }}
-        uses: peter-evans/enable-pull-request-automerge@v3
-        with:
-          token: ${{ secrets.GH_PAT }}
-          pull-request-number: ${{ steps.create_pr.outputs.pull-request-number }}
-          merge-method: squash
-
-      - name: Checkout merged main
-        if: ${{ steps.create_pr.outputs.pull-request-number }}
-        uses: actions/checkout@v3
-        with:
-          token: ${{ secrets.GH_PAT }}
-          fetch-depth: 0
-          ref: main
-
-      - name: Configure npm authentication
-        run: |
-          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
-
-      - name: Publish package
-        if: ${{ steps.create_pr.outputs.pull-request-number }}
-        run: yarn publish --non-interactive
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
       # -- Opzionale: se vuoi auto-merge quando CI è verde --
       # - name: Auto-merge PR
       #   uses: pascalgn/automerge-action@v0.15.4
