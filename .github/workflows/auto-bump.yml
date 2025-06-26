@@ -58,13 +58,23 @@ jobs:
           MODEL_FILE_NAME: ${{ secrets.LLM_MODEL_FILE_NAME }}
         run: |
           mkdir -p models
+          # Determine file name
+          if [ -z "$MODEL_FILE_NAME" ]; then
+            MODEL_FILE_NAME=$(basename "$MODEL_URL")
+          fi
+          echo "Using MODEL_URL: $MODEL_URL"
+          echo "Using MODEL_FILE_NAME: $MODEL_FILE_NAME"
           if [ ! -f models/"$MODEL_FILE_NAME" ]; then
             echo "Downloading LLM model to models/$MODEL_FILE_NAME..."
             curl -L \
               -H "Authorization: Bearer $HUGGINGFACE_TOKEN" \
               "$MODEL_URL" \
               -o models/"$MODEL_FILE_NAME"
+          else
+            echo "Model already exists: models/$MODEL_FILE_NAME"
           fi
+          echo "Contents of models/:"
+          ls -l models
 
       - name: Start LocalAI server
         run: |
