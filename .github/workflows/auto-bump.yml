@@ -77,7 +77,7 @@ jobs:
         uses: peter-evans/enable-pull-request-automerge@v3
         with:
           token: ${{ secrets.GH_PAT }}
-          pull-request-number: ${{ steps.create_pr.outputs.pull_request_number }}
+          pull-request-number: ${{ steps.create_pr.outputs.pull-request-number }}
           merge-method: squash
 
       - name: Checkout merged main
