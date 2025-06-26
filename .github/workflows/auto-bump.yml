@@ -51,20 +51,6 @@ jobs:
           # esegui Prettier o simili, se configurato:
           npm run format -- --write || true
 
-      - name: Commit lint/format fixes
-        run: |
-          if [ -n "$(git status --porcelain)" ]; then
-            git add .
-            git commit -m "chore: apply lint/format fixes" || echo "No fixes to commit"
-          fi
-
-      - name: Install DeepSeek CLI
-        run: |
-          python3 -m pip install --upgrade pip
-          pip3 install deepseek-cli
-          # verify CLI installation
-          deepseek --help
-
       - name: Download local LLM model
         env:
           MODEL_URL: ${{ secrets.LLM_MODEL_URL }}
@@ -79,20 +65,23 @@ jobs:
               --output models/llm.ggml
           fi
 
-      - name: AI Code Enhancements (local LLM)
+      - name: Install llama.cpp
         run: |
-          echo "==> Generating patch via DeepSeek..."
-          deepseek generate \
-            --model models/llm.ggml \
-            --system "You are an AI assistant that only outputs valid unified diffs and nothing else." \
-            --user "Project version: ${{ steps.bump.outputs.new-version }}. Please generate a unified diff patch that: 1. Adds a new feature stub in src/ 2. Updates README.md with usage instructions." \
-            --format diff > ai_patch.diff
+          git clone https://github.com/ggerganov/llama.cpp
+          cd llama.cpp && make
+
+      - name: AI Code Enhancements (local LLM via llama.cpp)
+        run: |
+          echo "Project version: ${{ steps.bump.outputs.new-version }}. Generating patch via llama.cpp..."
+          echo "You are an AI assistant that only outputs valid unified diffs and nothing else. Project version: ${{ steps.bump.outputs.new-version }}. Please generate a unified diff patch that: 1. Adds a new feature stub in src/ 2. Updates README.md with usage instructions." > prompt.txt
+          ./llama.cpp/main -m models/llm.ggml --temp 0.7 --n_predict 512 -p "$(cat prompt.txt)" > ai_response.txt
+          sed -n '/^diff /,/^$/p' ai_response.txt > ai_patch.diff || true
           if [ -s ai_patch.diff ]; then
-            echo "==> Applying patch:"
+            echo "==> Applying patch"
             cat ai_patch.diff
             git apply ai_patch.diff
             git add .
-            git commit -m "feat(ai-local): apply deepseek patch for version ${{ steps.bump.outputs.new-version }}"
+            git commit -m "feat(ai-local): apply llama.cpp patch for version ${{ steps.bump.outputs.new-version }}" || true
           else
             echo "⚠️ No patch generated."
           fi
