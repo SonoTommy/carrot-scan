@@ -10,7 +10,7 @@
   "type": "module",
   "scripts": {
     "test": "node --experimental-vm-modules node_modules/.bin/jest --config jest.config.mjs --coverage",
-    "lint": "eslint \"**/*.{js,ts}\" --config .eslintrc.cjs",
+    "lint": "eslint \"**/*.{js,ts}\" --fix",
     "lint:fix": "eslint \"**/*.{js,ts}\" --config .eslintrc.cjs --fix",
     "format": "prettier --write \"**/*.{js,ts,json,md}\"",
     "start-api": "node ./src/api.js"
