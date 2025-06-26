@@ -51,13 +51,30 @@ jobs:
           # esegui Prettier o simili, se configurato:
           npm run format -- --write || true
 
+      - name: Download LLM model
+        env:
+          MODEL_URL: ${{ secrets.LLM_MODEL_URL }}
+          HUGGINGFACE_TOKEN: ${{ secrets.HUGGINGFACE_TOKEN }}
+          MODEL_FILE_NAME: ${{ secrets.LLM_MODEL_FILE_NAME }}
+        run: |
+          mkdir -p models
+          if [ ! -f models/"$MODEL_FILE_NAME" ]; then
+            echo "Downloading LLM model to models/$MODEL_FILE_NAME..."
+            curl -L \
+              -H "Authorization: Bearer $HUGGINGFACE_TOKEN" \
+              "$MODEL_URL" \
+              -o models/"$MODEL_FILE_NAME"
+          fi
 
       - name: Start LocalAI server
         run: |
           echo "Pulling LocalAI Docker image..."
           docker pull localai/localai:master-ffmpeg-core
           echo "Starting LocalAI in detached mode..."
-          docker run -d --name localai -p 8080:8080 localai/localai:master-ffmpeg-core
+          docker run -d --name localai \
+            -v "${{ github.workspace }}/models:/build/models" \
+            -p 8080:8080 \
+            localai/localai:master-ffmpeg-core
           echo "Waiting for LocalAI to be ready..."
           for i in $(seq 1 10); do
             if curl -s http://localhost:8080/health; then
