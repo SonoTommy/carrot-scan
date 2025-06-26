@@ -91,6 +91,7 @@ jobs:
 
       - name: Enable PR Auto-merge
         if: ${{ steps.create_pr.outputs.pull-request-number }}
+        continue-on-error: true
         uses: peter-evans/enable-pull-request-automerge@v3
         with:
           token: ${{ secrets.GH_PAT }}
