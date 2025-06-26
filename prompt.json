@@ -8,7 +8,7 @@
     },
     {
       "role": "user",
-      "content": "Project version: '1.2.24'. Please generate a unified diff patch that:\\n1. Creates a new file src/feature-'1.2.24'.js exporting a function stub named feature1_2_24.\\n2. Appends a '## Usage' section at the end of README.md explaining how to import and use this new feature.\\nDo not modify any other files.\\n\\nExample usage:\\n\\nimport { feature1_2_24 } from './src/feature-1.2.24';\\n\\nfeature1_2_24();"
+      "content": "Project version: '1.2.25'. Please generate a unified diff patch that:\\n1. Creates a new file src/feature-'1.2.25'.js exporting a function stub named feature1_2_25.\\n2. Appends a '## Usage' section at the end of README.md explaining how to import and use this new feature.\\nDo not modify any other files.\\n\\nExample usage:\\n\\nimport { feature1_2_25 } from './src/feature-1.2.25';\\n\\nfeature1_2_25();"
     }
   ]
 }
