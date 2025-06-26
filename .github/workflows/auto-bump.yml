@@ -51,9 +51,35 @@ jobs:
           # esegui Prettier o simili, se configurato:
           npm run format -- --write || true
 
-      - name: Placeholder for AI code enhancements
+
+      - name: Start LocalAI server
+        uses: mudler/start-localai@v1
+        with:
+          model: ${{ secrets.LLM_MODEL_ID }}
+          port: 8080
+
+      - name: AI Code Enhancements via LocalAI
         run: |
-          echo "TODO: Cerca su GitHub Marketplace un'Action per AI code enhancements: https://github.com/marketplace?type=actions&q=ai"
+          echo "==> Generating patch via LocalAI..."
+          curl -s -X POST http://localhost:8080/v1/chat/completions \
+            -H "Content-Type: application/json" \
+            -d '{
+              "model":"'"${{ secrets.LLM_MODEL_ID }}"'",
+              "messages":[
+                {"role":"system","content":"You are an AI assistant that only outputs valid unified diffs."},
+                {"role":"user","content":"Project version: '${{ steps.bump.outputs.new-version }}'. Please generate a unified diff patch that: 1. Adds a new feature stub in src/ 2. Updates README.md with usage instructions."}
+              ]
+            }' > ai_response.json
+          jq -r '.choices[0].message.content' ai_response.json > ai_patch.diff || true
+          if [ -s ai_patch.diff ]; then
+            echo "==> Applying patch"
+            cat ai_patch.diff
+            git apply ai_patch.diff
+            git add .
+            git commit -m "feat(ai-local): apply LocalAI patch for version ${{ steps.bump.outputs.new-version }}" || true
+          else
+            echo "⚠️ No patch generated."
+          fi
 
       - name: Push changes & create PR
         id: create_pr
