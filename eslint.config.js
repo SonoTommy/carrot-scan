@@ -2,6 +2,7 @@ import js from '@eslint/js';
 import * as importPlugin from 'eslint-plugin-import';
 import prettier from 'eslint-plugin-prettier';
 
+
 export default [
   js.configs.recommended,         // base ESLint rules
   importPlugin.configs.recommended,
