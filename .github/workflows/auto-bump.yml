@@ -53,9 +53,19 @@ jobs:
 
 
       - name: Start LocalAI server
-        uses: mudler/localai-github-action@v1
-        with:
-          model: ${{ secrets.LLM_MODEL_ID }}
+        run: |
+          echo "Pulling LocalAI Docker image..."
+          docker pull localai/localai:master-ffmpeg-core
+          echo "Starting LocalAI in detached mode..."
+          docker run -d --name localai -p 8080:8080 localai/localai:master-ffmpeg-core
+          echo "Waiting for LocalAI to be ready..."
+          for i in $(seq 1 10); do
+            if curl -s http://localhost:8080/health; then
+              echo "LocalAI is up!"
+              break
+            fi
+            sleep 1
+          done
 
       - name: AI Code Enhancements via LocalAI
         run: |
