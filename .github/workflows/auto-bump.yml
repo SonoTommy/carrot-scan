@@ -75,5 +75,5 @@ jobs:
       # - name: Auto-merge PR
       #   uses: pascalgn/automerge-action@v0.15.4
       #   with:
-      #     github_token: ${{ secrets.GITHUB_TOKEN }}
+      #     github_token: ${{ secrets.GH_PAT }}
       #     merge_method: squash
