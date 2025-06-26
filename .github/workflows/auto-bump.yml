@@ -45,8 +45,6 @@ jobs:
 
     # 4) ESLint / Prettier con fix automatico
     - uses: wearerequired/lint-action@v2
-      env:
-        ESLINT_USE_FLAT_CONFIG: "false"
       with:
         eslint: true
         eslint_auto_fix: true
