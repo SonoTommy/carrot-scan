@@ -78,7 +78,6 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@eslint/js": "^9.29.0",
     "@fastify/swagger": "^6.1.1",
     "@fastify/swagger-ui": "^4.2.0",
     "@nodesecure/js-x-ray": "^9.0.0",
@@ -90,9 +89,11 @@
     "yaml": "^2.8.0"
   },
   "devDependencies": {
+    "@eslint/js": "^9.29.0",
     "eslint": "^9.29.0",
     "eslint-config-prettier": "^10.1.5",
-    "eslint-plugin-prettier": "^5.5.0",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-prettier": "^5.5.1",
     "eslint-plugin-security": "^3.0.1",
     "eslint-plugin-unicorn": "^59.0.1",
     "execa": "^9.6.0",
