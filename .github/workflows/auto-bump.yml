@@ -53,10 +53,9 @@ jobs:
 
 
       - name: Start LocalAI server
-        uses: mudler/start-localai@v1
+        uses: mudler/localai-github-action@v1
         with:
           model: ${{ secrets.LLM_MODEL_ID }}
-          port: 8080
 
       - name: AI Code Enhancements via LocalAI
         run: |
