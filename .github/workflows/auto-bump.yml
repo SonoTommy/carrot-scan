@@ -4,6 +4,7 @@ permissions:
   contents: write
   pull-requests: write
 
+
 on:
   # Pianificato: ogni 10 minuti
   schedule:
