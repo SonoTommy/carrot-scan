@@ -73,6 +73,7 @@ jobs:
           labels: automated, bump
 
       - name: Enable PR Auto-merge
+        if: ${{ steps.create_pr.outputs.pull-request-number }}
         uses: peter-evans/enable-pull-request-automerge@v3
         with:
           token: ${{ secrets.GH_PAT }}
@@ -80,6 +81,7 @@ jobs:
           merge-method: squash
 
       - name: Checkout merged main
+        if: ${{ steps.create_pr.outputs.pull-request-number }}
         uses: actions/checkout@v3
         with:
           token: ${{ secrets.GH_PAT }}
@@ -87,6 +89,7 @@ jobs:
           ref: main
 
       - name: Publish package
+        if: ${{ steps.create_pr.outputs.pull-request-number }}
         run: yarn publish --non-interactive
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
