@@ -59,7 +59,7 @@ jobs:
           fi
 
       - name: Install DeepSeek CLI
-        run: npm install -g deepseek
+        run: npm install deepseek
 
       - name: Download local LLM model
         env:
@@ -78,7 +78,7 @@ jobs:
       - name: AI Code Enhancements (local LLM)
         run: |
           echo "==> Generating patch via DeepSeek..."
-          deepseek generate \
+          npx deepseek generate \
             --model models/llm.ggml \
             --system "You are an AI assistant that only outputs valid unified diffs and nothing else." \
             --user "Project version: ${{ steps.bump.outputs.new-version }}. Please generate a unified diff patch that: 1. Adds a new feature stub in src/ 2. Updates README.md with usage instructions." \
