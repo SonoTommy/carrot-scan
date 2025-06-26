@@ -54,32 +54,32 @@ jobs:
           # esegui Prettier o simili, se configurato:
           npm run format -- --write || true
 
-
-      - name: Start Ollama server
+      - name: Start LocalAI server
         run: |
-          echo "Pulling Ollama image..."
-          docker pull ollama/ollama:latest
-          echo "Starting Ollama in detached mode..."
-          docker run -d --name ollama -p 11434:11434 ollama/ollama:latest
-          echo "Waiting for Ollama to be ready..."
-          for i in $(seq 1 30); do
-            if curl -s http://localhost:11434/api/tags >/dev/null; then
-              echo "Ollama is up!"
+          echo "Pulling LocalAI image..."
+          docker pull localai/localai:latest
+          echo "Starting LocalAI in detached mode..."
+          docker run -d --name localai -p 8080:8080 \
+            -e "MODELS=TheBloke/CodeLlama-7B-Instruct-GGUF" \
+            localai/localai:latest
+          echo "Waiting for LocalAI to be ready..."
+          for i in $(seq 1 60); do
+            if curl -s http://localhost:8080/healthz | grep -q 'ok'; then
+              echo "LocalAI is up!"
               break
             fi
             sleep 1
           done
-          echo "Pre‑pulling codellama model..."
-          docker exec ollama ollama pull codellama:7b
 
-      - name: AI Code Enhancements via Ollama
+      - name: AI Code Enhancements via LocalAI
+        env:
+          OPENAI_API_BASE: http://localhost:8080/v1
+          OPENAI_API_KEY: dummy_key
         run: |
-          echo "==> Generating patch via Ollama..."
-          curl -s -X POST http://localhost:11434/api/chat \
-            -H "Content-Type: application/json" \
-            -d @- << 'EOF' | tee ai_response.json
+          echo "==> Generating patch via LocalAI..."
+          cat <<'JSON' > prompt.json
           {
-            "model": "codellama:7b",
+            "model": "codellama:7b-instruct",
             "stream": false,
             "messages": [
               {
@@ -92,23 +92,19 @@ jobs:
               }
             ]
           }
-          EOF
-          jq -r '.message.content' ai_response.json > ai_raw.txt || true
-
-          # Extract unified‑diff content if wrapped in markdown fences
-          awk 'BEGIN{code=0} /^\\\diff/{code=1;next} /^\\\/{code=0} code' ai_raw.txt > ai_patch.diff || true
-
-          # Fallback: if no content extracted (no fences), use the raw text
-          if [ ! -s ai_patch.diff ]; then
-            cp ai_raw.txt ai_patch.diff
-          fi
-
+          JSON
+          curl -s -X POST "$OPENAI_API_BASE/chat/completions" \
+               -H "Content-Type: application/json" \
+               -d @prompt.json > ai_response.json
+          jq -r '.choices[0].message.content' ai_response.json > ai_raw.txt || true
+          # Extract only the diff portion
+          awk 'BEGIN{printing=0} /^diff/{printing=1} printing' ai_raw.txt > ai_patch.diff || true
           if [ -s ai_patch.diff ]; then
             echo "==> Applying patch"
             cat ai_patch.diff
             git apply ai_patch.diff
             git add .
-            git commit -m "feat(ai-local): apply Ollama patch for version ${{ steps.bump.outputs.new-version }}" || true
+            git commit -m "feat(ai-local): apply LocalAI patch for version ${{ steps.bump.outputs.new-version }}" || true
           else
             echo "⚠️ No patch generated."
           fi
