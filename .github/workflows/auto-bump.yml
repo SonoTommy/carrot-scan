@@ -59,6 +59,7 @@ jobs:
           fi
 
       - name: Push changes & create PR
+        id: create_pr
         uses: peter-evans/create-pull-request@v5
         with:
           # se preferisci push diretto su main, sostituisci con actions/github-script o github-push-action
@@ -70,6 +71,25 @@ jobs:
             - Version bumped automatically  
             - Lint/format fixes applied
           labels: automated, bump
+
+      - name: Merge pull request
+        uses: peter-evans/merge-pull-request@v2
+        with:
+          token: ${{ secrets.GH_PAT }}
+          pull-request-number: ${{ steps.create_pr.outputs.pull_request_number }}
+          merge-method: squash
+
+      - name: Checkout merged main
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GH_PAT }}
+          fetch-depth: 0
+          ref: main
+
+      - name: Publish package
+        run: yarn publish --non-interactive
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       # -- Opzionale: se vuoi auto-merge quando CI è verde --
       # - name: Auto-merge PR
