@@ -51,57 +51,33 @@ jobs:
           # esegui Prettier o simili, se configurato:
           npm run format -- --write || true
 
-      - name: Download LLM model
-        env:
-          MODEL_URL: ${{ secrets.LLM_MODEL_URL }}
-          HUGGINGFACE_TOKEN: ${{ secrets.HUGGINGFACE_TOKEN }}
-          MODEL_FILE_NAME: ${{ secrets.LLM_MODEL_FILE_NAME }}
-        run: |
-          mkdir -p models
-          # Determine file name
-          if [ -z "$MODEL_FILE_NAME" ]; then
-            MODEL_FILE_NAME=$(basename "$MODEL_URL")
-          fi
-          echo "Using MODEL_URL: $MODEL_URL"
-          echo "Using MODEL_FILE_NAME: $MODEL_FILE_NAME"
-          if [ ! -f models/"$MODEL_FILE_NAME" ]; then
-            echo "Downloading LLM model to models/$MODEL_FILE_NAME..."
-            curl -L \
-              -H "Authorization: Bearer $HUGGINGFACE_TOKEN" \
-              "$MODEL_URL" \
-              -o models/"$MODEL_FILE_NAME"
-          else
-            echo "Model already exists: models/$MODEL_FILE_NAME"
-          fi
-          echo "Contents of models/:"
-          ls -l models
 
-      - name: Start LocalAI server
+      - name: Start Ollama server
         run: |
-          echo "Pulling LocalAI Docker image..."
-          docker pull localai/localai:master-ffmpeg-core
-          echo "Starting LocalAI in detached mode..."
-          docker run -d --name localai \
-            -v "${{ github.workspace }}/models:/build/models" \
-            -p 8080:8080 \
-            localai/localai:master-ffmpeg-core
-          echo "Waiting for LocalAI to be ready..."
-          for i in $(seq 1 10); do
-            if curl -s http://localhost:8080/health; then
-              echo "LocalAI is up!"
+          echo "Pulling Ollama image..."
+          docker pull ollama/ollama:latest
+          echo "Starting Ollama in detached mode..."
+          docker run -d --name ollama -p 11434:11434 ollama/ollama:latest
+          echo "Waiting for Ollama to be ready..."
+          for i in $(seq 1 30); do
+            if curl -s http://localhost:11434/api/tags >/dev/null; then
+              echo "Ollama is up!"
               break
             fi
             sleep 1
           done
+          echo "Pre‑pulling codellama model..."
+          docker exec ollama ollama pull codellama:7b
 
-      - name: AI Code Enhancements via LocalAI
+      - name: AI Code Enhancements via Ollama
         run: |
-          echo "==> Generating patch via LocalAI..."
-          curl -s -X POST http://localhost:8080/v1/chat/completions \
+          echo "==> Generating patch via Ollama..."
+          curl -s -X POST http://localhost:11434/api/chat \
             -H "Content-Type: application/json" \
-            --data @- << 'EOF' | tee ai_response.json
+            -d @- << 'EOF' | tee ai_response.json
           {
-            "model": "${{ secrets.LLM_MODEL_ID }}",
+            "model": "codellama:7b",
+            "stream": false,
             "messages": [
               {
                 "role": "system",
@@ -109,18 +85,18 @@ jobs:
               },
               {
                 "role": "user",
-                "content": "Project version: '${{ steps.bump.outputs.new-version }}'. Please generate a unified diff patch that:\n1. Creates a new file src/feature-'${{ steps.bump.outputs.new-version }}'.js exporting a function stub named feature${{ steps.bump.outputs.new-version }}.\n2. Appends a '## Usage' section at the end of README.md explaining how to import and use this new feature.\nDo not modify any other files."
+                "content": "Project version: '${{ steps.bump.outputs.new-version }}'. Please generate a unified diff patch that:\\n1. Creates a new file src/feature-'${{ steps.bump.outputs.new-version }}'.js exporting a function stub named feature${{ steps.bump.outputs.new-version }}.\\n2. Appends a '## Usage' section at the end of README.md explaining how to import and use this new feature.\\nDo not modify any other files."
               }
             ]
           }
           EOF
-          jq -r '.choices[0].message.content' ai_response.json > ai_patch.diff || true
+          jq -r '.message.content' ai_response.json > ai_patch.diff || true
           if [ -s ai_patch.diff ]; then
             echo "==> Applying patch"
             cat ai_patch.diff
             git apply ai_patch.diff
             git add .
-            git commit -m "feat(ai-local): apply LocalAI patch for version ${{ steps.bump.outputs.new-version }}" || true
+            git commit -m "feat(ai-local): apply Ollama patch for version ${{ steps.bump.outputs.new-version }}" || true
           else
             echo "⚠️ No patch generated."
           fi
