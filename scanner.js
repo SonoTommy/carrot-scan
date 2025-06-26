@@ -52,21 +52,34 @@ export async function scan(target, { mode = 'default', incremental = false, stre
             .toString()
             .split('\n')
             .filter(Boolean)
-            .map(f => path.resolve(target, f));
+            .map((f) => path.resolve(target, f));
           allFiles = changed;
         } else {
           allFiles = stats.isDirectory()
-            ? await globby(['**/*'], { cwd: target, gitignore: true, absolute: true, onlyFiles: true, dot: true })
+            ? await globby(['**/*'], {
+                cwd: target,
+                gitignore: true,
+                absolute: true,
+                onlyFiles: true,
+                dot: true,
+              })
             : [path.resolve(target)];
         }
         if (!allFiles.length) {
-          emitter.emit('complete', { target, mode, score: 100, rating: 'good', messages: ['No files to scan'], exitCode: 0 });
+          emitter.emit('complete', {
+            target,
+            mode,
+            score: 100,
+            rating: 'good',
+            messages: ['No files to scan'],
+            exitCode: 0,
+          });
           return;
         }
         // 2. Plugin results collection with streaming emits
         const pluginResults = [];
         for (const plugin of plugins) {
-          const matchingFiles = allFiles.filter(filePath => plugin.constructor.applies(filePath));
+          const matchingFiles = allFiles.filter((filePath) => plugin.constructor.applies(filePath));
           if (!matchingFiles.length) continue;
           for (const filePath of matchingFiles) {
             const content = await fs.readFile(filePath, 'utf8');
@@ -77,7 +90,7 @@ export async function scan(target, { mode = 'default', incremental = false, stre
             }
           }
           if (plugin.constructor.pluginName === 'critical') {
-            const criticalCount = pluginResults.filter(r => r.pluginName === 'critical').length;
+            const criticalCount = pluginResults.filter((r) => r.pluginName === 'critical').length;
             if (criticalCount > 0) {
               emitter.emit('complete', {
                 target,
@@ -102,10 +115,15 @@ export async function scan(target, { mode = 'default', incremental = false, stre
         score = Math.max(0, score);
         // 4. Rating
         const rating =
-          score >= 90 ? 'excellent' :
-          score >= 75 ? 'good' :
-          score >= 50 ? 'fair' :
-          score >= 25 ? 'poor' : 'bad';
+          score >= 90
+            ? 'excellent'
+            : score >= 75
+              ? 'good'
+              : score >= 50
+                ? 'fair'
+                : score >= 25
+                  ? 'poor'
+                  : 'bad';
         emitter.emit('complete', {
           target,
           mode,
@@ -130,24 +148,35 @@ export async function scan(target, { mode = 'default', incremental = false, stre
       .toString()
       .split('\n')
       .filter(Boolean)
-      .map(f => path.resolve(target, f));
+      .map((f) => path.resolve(target, f));
     allFiles = changed;
   } else {
     allFiles = stats.isDirectory()
-      ? await globby(['**/*'], { cwd: target, gitignore: true, absolute: true, onlyFiles: true, dot: true })
+      ? await globby(['**/*'], {
+          cwd: target,
+          gitignore: true,
+          absolute: true,
+          onlyFiles: true,
+          dot: true,
+        })
       : [path.resolve(target)];
   }
 
   if (!allFiles.length) {
-    return { target, mode, score: 100, rating: 'good', messages: ['No files to scan'], exitCode: 0 };
+    return {
+      target,
+      mode,
+      score: 100,
+      rating: 'good',
+      messages: ['No files to scan'],
+      exitCode: 0,
+    };
   }
 
   // 2. Plugin results collection
   const pluginResults = [];
   for (const plugin of plugins) {
-    const matchingFiles = allFiles.filter(filePath =>
-      plugin.constructor.applies(filePath)
-    );
+    const matchingFiles = allFiles.filter((filePath) => plugin.constructor.applies(filePath));
     if (!matchingFiles.length) continue;
 
     for (const filePath of matchingFiles) {
@@ -157,7 +186,7 @@ export async function scan(target, { mode = 'default', incremental = false, stre
     }
 
     if (plugin.constructor.pluginName === 'critical') {
-      const criticalCount = pluginResults.filter(r => r.pluginName === 'critical').length;
+      const criticalCount = pluginResults.filter((r) => r.pluginName === 'critical').length;
       if (criticalCount > 0) {
         return {
           target,
@@ -183,10 +212,15 @@ export async function scan(target, { mode = 'default', incremental = false, stre
 
   // 4. Rating
   const rating =
-    score >= 90 ? 'excellent' :
-    score >= 75 ? 'good' :
-    score >= 50 ? 'fair' :
-    score >= 25 ? 'poor' : 'bad';
+    score >= 90
+      ? 'excellent'
+      : score >= 75
+        ? 'good'
+        : score >= 50
+          ? 'fair'
+          : score >= 25
+            ? 'poor'
+            : 'bad';
 
   return {
     target,

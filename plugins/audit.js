@@ -41,8 +41,8 @@ export class AuditPlugin extends Plugin {
         line: 0,
         column: 0,
         severity,
-        message: `npm audit score: ${auditScore}`
-      }
+        message: `npm audit score: ${auditScore}`,
+      },
     ];
   }
 }

@@ -20,14 +20,16 @@ export class CriticalPlugin extends Plugin {
       if (matches) count += matches.length;
     }
     if (count > 0) {
-      return [{
-        pluginName: this.constructor.pluginName,
-        filePath,
-        line: 0,
-        column: 0,
-        severity: 'error',
-        message: `${count} critical pattern(s) detected`,
-      }];
+      return [
+        {
+          pluginName: this.constructor.pluginName,
+          filePath,
+          line: 0,
+          column: 0,
+          severity: 'error',
+          message: `${count} critical pattern(s) detected`,
+        },
+      ];
     }
     return [];
   }

@@ -45,7 +45,7 @@ export class Plugin {
 
 /**
  * Example plugin template:
- * 
+ *
  * import { Plugin } from './plugin-interface.js';
  *
  * export class ExamplePlugin extends Plugin {
