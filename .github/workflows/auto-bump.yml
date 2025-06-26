@@ -144,7 +144,9 @@ jobs:
               concurrency: 4
             });
             ```
-          labels: automated, bump
+          labels: |
+            automated
+            bump
 
       - name: Enable PR Auto-merge
         if: ${{ steps.create_pr.outputs.pull-request-number }}
