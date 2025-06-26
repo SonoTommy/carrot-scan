@@ -64,10 +64,15 @@ jobs:
       - name: Download local LLM model
         env:
           MODEL_URL: ${{ secrets.LLM_MODEL_URL }}
+          HUGGINGFACE_TOKEN: ${{ secrets.HUGGINGFACE_TOKEN }}
         run: |
           mkdir -p models
           if [ ! -f models/llm.ggml ]; then
-            wget -O models/llm.ggml "$MODEL_URL"
+            echo "Downloading model from Hugging Face with authentication..."
+            curl -L \
+              -H "Authorization: Bearer $HUGGINGFACE_TOKEN" \
+              "$MODEL_URL" \
+              --output models/llm.ggml
           fi
 
       - name: AI Code Enhancements (local LLM)
