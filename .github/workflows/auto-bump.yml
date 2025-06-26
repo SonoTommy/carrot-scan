@@ -88,6 +88,10 @@ jobs:
           fetch-depth: 0
           ref: main
 
+      - name: Configure npm authentication
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+
       - name: Publish package
         if: ${{ steps.create_pr.outputs.pull-request-number }}
         run: yarn publish --non-interactive
