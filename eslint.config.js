@@ -4,11 +4,13 @@ import prettier from 'eslint-plugin-prettier';
 
 // Recommended rules from eslint‑plugin‑import (converted for flat config)
 const importRecommendedRules = importPlugin.configs.recommended.rules;
+const nodeEnv = js.environments.node;
 
-// Remove the unsupported `root` key from @eslint/js recommended flat config
-const { root: _removedRoot, ...eslintRecommendedNoRoot } = js.configs.recommended;
+// eslint-disable-next-line no-unused-vars
+const { root: _unused, ...eslintRecommendedNoRoot } = js.configs.recommended;
 
 export default [
+  nodeEnv, // Node environment globals
   eslintRecommendedNoRoot, // base ESLint rules (root key removed)
   {
     plugins: {
@@ -22,6 +24,7 @@ export default [
       // tue regole personalizzate / override
       'prettier/prettier': 'error',
       'import/no-unresolved': 'error',
+      'no-unused-vars': ['error', { varsIgnorePattern: '^_' }],
       // ...
     },
     languageOptions: {
@@ -30,9 +33,13 @@ export default [
     },
   },
   {
-    files: ['**/*.test.js'],
-    rules: {
-      // override per i test
+    files: ['**/*.test.{js,ts}', 'scan-test/**/*.js', 'scan-test/**/*.ts'],
+    languageOptions: {
+      globals: {
+        describe: 'readonly',
+        it: 'readonly',
+        expect: 'readonly',
+      },
     },
   },
 ];
