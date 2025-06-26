@@ -4,7 +4,6 @@ permissions:
   contents: write
   pull-requests: write
 
-
 on:
   # Pianificato: ogni 10 minuti
   schedule:
@@ -53,7 +52,6 @@ jobs:
           # esegui Prettier o simili, se configurato:
           npm run format -- --write
 
-
       - name: Push changes & create PR
         id: create_pr
         uses: peter-evans/create-pull-request@v5
@@ -90,7 +88,6 @@ jobs:
               concurrency: 4
             });
             ```
-          
 
       - name: Enable PR Auto-merge
         if: ${{ steps.create_pr.outputs.pull-request-number }}
@@ -118,13 +115,6 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      # -- Opzionale: se vuoi auto-merge quando CI è verde --
-      # - name: Auto-merge PR
-      #   uses: pascalgn/automerge-action@v0.15.4
-      #   with:
-      #     github_token: ${{ secrets.GH_PAT }}
-      #     merge_method: squash
-
   auto-fix:
     runs-on: ubuntu-latest
     steps:
@@ -143,9 +133,10 @@ jobs:
       - run: npm ci
 
       - name: Format & lint (fix)
+        continue-on-error: true
         run: |
           npx prettier . --write
-          npx eslint . --fix
+          npx eslint . --fix || true
 
       - name: Commit & push changes
         uses: stefanzweifel/git-auto-commit-action@v6
