@@ -58,38 +58,33 @@ jobs:
             git commit -m "chore: apply lint/format fixes" || echo "No fixes to commit"
           fi
 
-      - name: AI Code Enhancements
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      - name: Install DeepSeek CLI
+        run: npm install -g deepseek
+
+      - name: Download local LLM model
         run: |
-          echo "==> AI Code Enhancements: requesting unified diff..."
-          RESPONSE=$(curl https://api.openai.com/v1/chat/completions \
-            -H "Authorization: Bearer $OPENAI_API_KEY" \
-            -H "Content-Type: application/json" \
-            -d '{
-              "model": "gpt-4o-mini",
-              "messages": [
-                {
-                  "role": "system",
-                  "content": "You are an AI assistant that only outputs valid unified diffs and nothing else."
-                },
-                {
-                  "role": "user",
-                  "content": "Project version: '${{ steps.bump.outputs.new-version }}'. Please generate a unified diff patch that: \n1. Adds a new feature stub in src/ \n2. Updates README.md with usage instructions."
-                }
-              ]
-            }')
-          echo "==> Raw AI response:"
-          echo "$RESPONSE"
-          echo "==> Extracting patch..."
-          echo "$RESPONSE" | jq -r '.choices[0].message.content' > ai_patch.diff
-          echo "==> Extracted patch:"
-          cat ai_patch.diff
-          echo "==> Applying patch..."
-          git apply ai_patch.diff || echo "No AI patch applied"
-          echo "==> Committing changes..."
-          git add .
-          git commit -m "feat(ai): apply AI-generated enhancements for version ${{ steps.bump.outputs.new-version }}" || echo "No AI enhancements"
+          mkdir -p models
+          if [ ! -f models/llm.ggml ]; then
+            wget -O models/llm.ggml https://your-model-source/llm.ggml
+          fi
+
+      - name: AI Code Enhancements (local LLM)
+        run: |
+          echo "==> Generating patch via DeepSeek..."
+          deepseek generate \
+            --model models/llm.ggml \
+            --system "You are an AI assistant that only outputs valid unified diffs and nothing else." \
+            --user "Project version: ${{ steps.bump.outputs.new-version }}. Please generate a unified diff patch that: 1. Adds a new feature stub in src/ 2. Updates README.md with usage instructions." \
+            --format diff > ai_patch.diff
+          if [ -s ai_patch.diff ]; then
+            echo "==> Applying patch:"
+            cat ai_patch.diff
+            git apply ai_patch.diff
+            git add .
+            git commit -m "feat(ai-local): apply deepseek patch for version ${{ steps.bump.outputs.new-version }}"
+          else
+            echo "⚠️ No patch generated."
+          fi
 
       - name: Push changes & create PR
         id: create_pr
