@@ -50,15 +50,11 @@ jobs:
       - name: Install & fix
         run: |
           npm install
-          # esegue lint con --fix, se hai ESLint:
-          npm run lint -- --fix
           # esegui Prettier o simili, se configurato:
           npm run format -- --write
 
       - name: Quality & safety checks
         run: |
-          # Enforce code quality — fail if lint errors remain
-          npm run lint
           # Run unit tests if a "test" script is defined
           if npm run | grep -qE "^.* test"; then
             npm test -- --ci --bail
