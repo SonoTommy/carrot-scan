@@ -39,9 +39,12 @@ jobs:
           BUMP_OUTPUT=$(npm version patch -m "chore(release): bump version to %s")
           # strip leading "v"
           VERSION=${BUMP_OUTPUT#v}
+          SANITIZED_VERSION=${VERSION//./_}
+          echo "Sanitized version: $SANITIZED_VERSION"
           echo "New version: $VERSION"
           # set GitHub Actions output
           echo "new-version=$VERSION" >> $GITHUB_OUTPUT
+          echo "sanitized-version=$SANITIZED_VERSION" >> $GITHUB_OUTPUT
 
       - name: Install & fix
         run: |
@@ -85,7 +88,7 @@ jobs:
               },
               {
                 "role": "user",
-                "content": "Project version: '${{ steps.bump.outputs.new-version }}'. Please generate a unified diff patch that:\\n1. Creates a new file src/feature-'${{ steps.bump.outputs.new-version }}'.js exporting a function stub named feature${{ steps.bump.outputs.new-version }}.\\n2. Appends a '## Usage' section at the end of README.md explaining how to import and use this new feature.\\nDo not modify any other files."
+                "content": "Project version: '${{ steps.bump.outputs.new-version }}'. Please generate a unified diff patch that:\\n1. Creates a new file src/feature-'${{ steps.bump.outputs.new-version }}'.js exporting a function stub named feature${{ steps.bump.outputs.sanitized-version }}.\\n2. Appends a '## Usage' section at the end of README.md explaining how to import and use this new feature.\\nDo not modify any other files.\\n\\nExample usage:\\n\\nimport { feature${{ steps.bump.outputs.sanitized-version }} } from './src/feature-${{ steps.bump.outputs.new-version }}';\\n\\nfeature${{ steps.bump.outputs.sanitized-version }}();"
               }
             ]
           }
