@@ -5,9 +5,8 @@ import prettier from 'eslint-plugin-prettier';
 // Recommended rules from eslint‑plugin‑import (converted for flat config)
 const importRecommendedRules = importPlugin.configs.recommended.rules;
 
-
 export default [
-  js.configs.recommended,         // base ESLint rules
+  js.configs.recommended, // base ESLint rules
   {
     plugins: {
       import: importPlugin,
