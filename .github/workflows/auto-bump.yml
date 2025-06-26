@@ -10,6 +10,7 @@ permissions:
   contents: write          # commit / tag / PR
   pull-requests: write
   packages: write          # per yarn publish → npm registry
+  checks: write            # ➜ serve a lint-action per creare le check-run
 
 concurrency:
   group: auto-bump
