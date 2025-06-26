@@ -72,13 +72,21 @@ jobs:
           echo "==> Generating patch via LocalAI..."
           curl -s -X POST http://localhost:8080/v1/chat/completions \
             -H "Content-Type: application/json" \
-            -d '{
-              "model":"'"${{ secrets.LLM_MODEL_ID }}"'",
-              "messages":[
-                {"role":"system","content":"You are an AI assistant that only outputs valid unified diffs."},
-                {"role":"user","content":"Project version: '${{ steps.bump.outputs.new-version }}'. Please generate a unified diff patch that: 1. Adds a new feature stub in src/ 2. Updates README.md with usage instructions."}
-              ]
-            }' > ai_response.json
+            --data @- << 'EOF' | tee ai_response.json
+          {
+            "model": "${{ secrets.LLM_MODEL_ID }}",
+            "messages": [
+              {
+                "role": "system",
+                "content": "You are an AI assistant that only outputs valid unified diffs for a JavaScript npm package."
+              },
+              {
+                "role": "user",
+                "content": "Project version: '${{ steps.bump.outputs.new-version }}'. Please generate a unified diff patch that:\n1. Creates a new file src/feature-'${{ steps.bump.outputs.new-version }}'.js exporting a function stub named feature${{ steps.bump.outputs.new-version }}.\n2. Appends a '## Usage' section at the end of README.md explaining how to import and use this new feature.\nDo not modify any other files."
+              }
+            ]
+          }
+          EOF
           jq -r '.choices[0].message.content' ai_response.json > ai_patch.diff || true
           if [ -s ai_patch.diff ]; then
             echo "==> Applying patch"
