@@ -60,7 +60,8 @@ jobs:
           docker pull localai/localai:latest
           echo "Starting LocalAI in detached mode..."
           docker run -d --name localai -p 8080:8080 \
-            -e "MODELS=TheBloke/CodeLlama-7B-Instruct-GGUF" \
+            -e HUGGINGFACE_API_TOKEN=${{ secrets.HF_TOKEN }} \
+            -e "MODELS=codellama:7b-instruct" \
             localai/localai:latest
           echo "Waiting for LocalAI to be ready..."
           for i in $(seq 1 60); do
@@ -106,7 +107,9 @@ jobs:
             git add .
             git commit -m "feat(ai-local): apply LocalAI patch for version ${{ steps.bump.outputs.new-version }}" || true
           else
-            echo "⚠️ No patch generated."
+            echo "❌ No patch generated – failing workflow"
+            cat ai_raw.txt || true
+            exit 1
           fi
       - name: Push changes & create PR
         id: create_pr
