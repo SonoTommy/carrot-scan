@@ -1,110 +1,161 @@
 name: Auto Bump & Fix
 
-# ⏰ parte ogni 10 ′ (UTC) e può essere avviato a mano
+permissions:
+  contents: write
+  pull-requests: write
+
 on:
+  # Pianificato: ogni 10 minuti
   schedule:
-    - cron: "*/10 * * * *"
+    - cron: '*/10 * * * *'
+  # Permette di far partire manualmente il workflow dal tab Actions
   workflow_dispatch:
 
-permissions:
-  contents: write          # commit / tag / PR
-  pull-requests: write
-  packages: write          # per yarn publish → npm registry
-  checks: write            # ➜ serve a lint-action per creare le check-run
-
-concurrency:
-  group: auto-bump
-  cancel-in-progress: true # evita run sovrapposte
-
 jobs:
-  bump:
+  bump-patch:
     runs-on: ubuntu-latest
-
     steps:
-    # 1) Checkout con il GITHUB_TOKEN (niente PAT da gestire)
-    - uses: actions/checkout@v4
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0   # necessario per tag/commit history
+          token: ${{ secrets.GH_PAT }}
 
-    # 2) Bump patch in package.json + tag
-    #    phips28/gh-action-bump-version restituisce:
-    #       newTag  (v1.2.3)  e newVersion (1.2.3)
-    - id: bump
-      uses: phips28/gh-action-bump-version@v11.1.1   # latest v11 release
-      with:
-        tag-prefix: "v"
-        minor-wording: ""     # disattiva minor/major automatici
-        major-wording: ""
-        patch-wording: ""     # forza sempre patch
-        commit-message: "chore(release): bump to {{version}}"
-    #   ↑ :contentReference[oaicite:1]{index=1}
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
 
-    # 3) Node + dipendenze
-    - uses: actions/setup-node@v3
-      with:
-        node-version: 18
-        cache: "npm"
-    - run: npm ci
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
-    # 4) ESLint / Prettier con fix automatico
-    - uses: wearerequired/lint-action@v2
-      with:
-        eslint: true
-        eslint_auto_fix: true
-        prettier: true
-        prettier_auto_fix: true
-        commit_message: "style: lint-auto-fix"
-    #   ↑ :contentReference[oaicite:2]{index=2}
+      - name: Bump patch version
+        id: bump
+        run: |
+          # bump patch and capture new version (e.g. "v1.2.3")
+          BUMP_OUTPUT=$(npm version patch -m "chore(release): bump version to %s")
+          # strip leading "v"
+          VERSION=${BUMP_OUTPUT#v}
+          SANITIZED_VERSION=${VERSION//./_}
+          echo "Sanitized version: $SANITIZED_VERSION"
+          echo "New version: $VERSION"
+          # set GitHub Actions output
+          echo "new-version=$VERSION" >> $GITHUB_OUTPUT
+          echo "sanitized-version=$SANITIZED_VERSION" >> $GITHUB_OUTPUT
 
-    # 5) Ollama pronto in 1 riga (niente Docker)
-    - uses: ai-action/setup-ollama@v1
-    #   ↑ :contentReference[oaicite:3]{index=3}
+      - name: Install & fix
+        run: |
+          npm install
+          # esegue lint con --fix, se hai ESLint:
+          npm run lint -- --fix || true
+          # esegui Prettier o simili, se configurato:
+          npm run format -- --write || true
 
-    # 6) Chiedi al modello il patch diff
-    - id: ai
-      uses: ai-action/ollama-action@v1
-      with:
-        model: codellama:7b-instruct  # già pullato se cache OK
-        prompt: |
-          You are an AI assistant that only outputs **valid unified diffs**.
-          Repo version: ${{ steps.bump.outputs.newVersion }}.
-          1. Create src/feature-${{ steps.bump.outputs.newVersion }}.js
-             exporting function `feature_${{ steps.bump.outputs.newVersion }}`.
-          2. Append a "## Usage" section to README.md explaining how to import
-             and call the new function.
-          Do **not** touch any other file.
-    #   ↑ :contentReference[oaicite:4]{index=4}
 
-    # 7) Applica il diff (se esiste)
-    - name: Apply patch
-      run: |
-        printf '%s\n' "${{ steps.ai.outputs.response }}" > patch.diff
-        if [ -s patch.diff ]; then
-          git apply --whitespace=fix patch.diff
-        fi
+      - name: Start Ollama server
+        run: |
+          echo "Pulling Ollama image..."
+          docker pull ollama/ollama:latest
+          echo "Starting Ollama in detached mode..."
+          docker run -d --name ollama -p 11434:11434 ollama/ollama:latest
+          echo "Waiting for Ollama to be ready..."
+          for i in $(seq 1 30); do
+            if curl -s http://localhost:11434/api/tags >/dev/null; then
+              echo "Ollama is up!"
+              break
+            fi
+            sleep 1
+          done
+          echo "Pre‑pulling codellama model..."
+          docker exec ollama ollama pull codellama:7b
 
-    # 8) Crea PR (o aggiorna la stessa) con TUTTE le modifiche fatte dal
-    #    bump-version, lint-action e Ollama.
-    - uses: peter-evans/create-pull-request@v6
-      with:
-        commit-message: "chore(release): bump → ${{ steps.bump.outputs.newVersion }}"
-        branch: auto-bump-${{ steps.bump.outputs.newVersion }}
-        title: "🔼 Bump ${{ steps.bump.outputs.newVersion }} + AI patch"
-        body: |
-          * patch version bumped da `gh-action-bump-version`
-          * fix lint/prettier automatici
-          * diff generato da Ollama
-        labels: automated,bump,ai
-    #   ↑ :contentReference[oaicite:5]{index=5}
+      - name: AI Code Enhancements via Ollama
+        run: |
+          echo "==> Generating patch via Ollama..."
+          curl -s -X POST http://localhost:11434/api/chat \
+            -H "Content-Type: application/json" \
+            -d @- << 'EOF' | tee ai_response.json
+          {
+            "model": "codellama:7b",
+            "stream": false,
+            "messages": [
+              {
+                "role": "system",
+                "content": "You are an AI assistant that only outputs valid unified diffs for a JavaScript npm package."
+              },
+              {
+                "role": "user",
+                "content": "Project version: '${{ steps.bump.outputs.new-version }}'. Please generate a unified diff patch that:\\n1. Creates a new file src/feature-'${{ steps.bump.outputs.new-version }}'.js exporting a function stub named feature${{ steps.bump.outputs.sanitized-version }}.\\n2. Appends a '## Usage' section at the end of README.md explaining how to import and use this new feature.\\nDo not modify any other files.\\n\\nExample usage:\\n\\nimport { feature${{ steps.bump.outputs.sanitized-version }} } from './src/feature-${{ steps.bump.outputs.new-version }}';\\n\\nfeature${{ steps.bump.outputs.sanitized-version }}();"
+              }
+            ]
+          }
+          EOF
+          jq -r '.message.content' ai_response.json > ai_raw.txt || true
 
-    # 9) Abilita auto-merge quando i check sono verdi (facoltativo)
-    - uses: peter-evans/enable-pull-request-automerge@v3
-      if: ${{ steps.create-pull-request.outputs.pull-request-number }}
-      with:
-        pull-request-number: ${{ steps.create-pull-request.outputs.pull-request-number }}
-        merge-method: squash
+          # Extract unified‑diff content if wrapped in markdown fences
+          awk 'BEGIN{code=0} /^\\\diff/{code=1;next} /^\\\/{code=0} code' ai_raw.txt > ai_patch.diff || true
 
-    # 10) Se la PR è già stata unita (merge-queue / automerge) pubblica su npm
-    - name: Publish to npm
-      if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
-      env:
-        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-      run: yarn publish --non-interactive
+          # Fallback: if no content extracted (no fences), use the raw text
+          if [ ! -s ai_patch.diff ]; then
+            cp ai_raw.txt ai_patch.diff
+          fi
+
+          if [ -s ai_patch.diff ]; then
+            echo "==> Applying patch"
+            cat ai_patch.diff
+            git apply ai_patch.diff
+            git add .
+            git commit -m "feat(ai-local): apply Ollama patch for version ${{ steps.bump.outputs.new-version }}" || true
+          else
+            echo "⚠️ No patch generated."
+          fi
+
+      - name: Push changes & create PR
+        id: create_pr
+        uses: peter-evans/create-pull-request@v5
+        with:
+          # se preferisci push diretto su main, sostituisci con actions/github-script o github-push-action
+          token: ${{ secrets.GH_PAT }}
+          commit-message: "chore(release): bump version to ${{ steps.bump.outputs.new-version }}"
+          branch: auto-bump-${{ steps.bump.outputs.new-version }}
+          title: "🔼 Bump to ${{ steps.bump.outputs.new-version }}"
+          body: |
+            - Version bumped automatically  
+            - Lint/format fixes applied
+          labels: automated, bump
+
+      - name: Enable PR Auto-merge
+        if: ${{ steps.create_pr.outputs.pull-request-number }}
+        uses: peter-evans/enable-pull-request-automerge@v3
+        with:
+          token: ${{ secrets.GH_PAT }}
+          pull-request-number: ${{ steps.create_pr.outputs.pull-request-number }}
+          merge-method: squash
+
+      - name: Checkout merged main
+        if: ${{ steps.create_pr.outputs.pull-request-number }}
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GH_PAT }}
+          fetch-depth: 0
+          ref: main
+
+      - name: Configure npm authentication
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+
+      - name: Publish package
+        if: ${{ steps.create_pr.outputs.pull-request-number }}
+        run: yarn publish --non-interactive
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      # -- Opzionale: se vuoi auto-merge quando CI è verde --
+      # - name: Auto-merge PR
+      #   uses: pascalgn/automerge-action@v0.15.4
+      #   with:
+      #     github_token: ${{ secrets.GH_PAT }}
+      #     merge_method: squash
