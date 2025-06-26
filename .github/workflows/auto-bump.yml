@@ -121,6 +121,17 @@ jobs:
           body: |
             - Version bumped automatically  
             - Lint/format fixes applied
+
+            ## Usage
+
+            After every automatic bump, the workflow generates a convenience stub that matches the new version number.  
+            Import it and call it as shown below ‑ just replace **X.Y.Z** with the package version you are using.
+
+            ```js
+            import { featureX_Y_Z } from './src/feature-X.Y.Z.js';
+
+            featureX_Y_Z();
+            ```
           labels: automated, bump
 
       - name: Enable PR Auto-merge
