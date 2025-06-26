@@ -98,21 +98,18 @@ jobs:
           pull-request-number: ${{ steps.create_pr.outputs.pull-request-number }}
           merge-method: squash
 
-      - name: Checkout merged main
-        if: ${{ steps.create_pr.outputs.pull-request-number }}
-        uses: actions/checkout@v3
-        with:
-          token: ${{ secrets.GH_PAT }}
-          fetch-depth: 0
-          ref: main
-
       - name: Configure npm authentication
-        run: |
-          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+        run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
 
       - name: Publish package
-        if: ${{ steps.create_pr.outputs.pull-request-number }}
-        run: yarn publish --non-interactive
+        run: |
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          echo "Attempting to publish version $CURRENT_VERSION"
+          if npm view carrot-scan@$CURRENT_VERSION --json >/dev/null 2>&1; then
+            echo "Version $CURRENT_VERSION is already on the registry – skipping publish."
+          else
+            yarn publish --non-interactive
+          fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
