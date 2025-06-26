@@ -60,11 +60,10 @@ jobs:
 
       - name: Install DeepSeek CLI
         run: |
-          # Clona il repo del CLI e lo installa globalmente
-          git clone https://github.com/deepseek/cli.git deepseek-cli
-          cd deepseek-cli
-          npm install
-          npm link
+          python3 -m pip install --upgrade pip
+          pip3 install deepseek-cli
+          # verify CLI installation
+          deepseek --help
 
       - name: Download local LLM model
         env:
