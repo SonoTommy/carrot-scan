@@ -65,21 +65,31 @@ jobs:
               --output models/llm.ggml
           fi
 
+      - name: Cache llama.cpp build
+        uses: actions/cache@v3
+        with:
+          path: llama.cpp/build
+          key: llama-build-${{ runner.os }}
+
       - name: Install llama.cpp
         run: |
           sudo apt-get update
-          sudo apt-get install -y libcurl4-openssl-dev
-          git clone https://github.com/ggerganov/llama.cpp
-          cd llama.cpp
-          mkdir build && cd build
-          cmake -DCMAKE_BUILD_TYPE=Release ..
-          cmake --build .
+          sudo apt-get install -y libcurl4-openssl-dev cmake build-essential
+          if [ ! -d llama.cpp/build ]; then
+            git clone https://github.com/ggerganov/llama.cpp
+            cd llama.cpp
+            mkdir build && cd build
+            cmake -DCMAKE_BUILD_TYPE=Release ..
+            cmake --build .
+          else
+            echo "Using cached llama.cpp build"
+          fi
 
       - name: AI Code Enhancements (local LLM via llama.cpp)
         run: |
           echo "Project version: ${{ steps.bump.outputs.new-version }}. Generating patch via llama.cpp..."
           echo "You are an AI assistant that only outputs valid unified diffs and nothing else. Project version: ${{ steps.bump.outputs.new-version }}. Please generate a unified diff patch that: 1. Adds a new feature stub in src/ 2. Updates README.md with usage instructions." > prompt.txt
-          ./llama.cpp/main -m models/llm.ggml --temp 0.7 --n_predict 512 -p "$(cat prompt.txt)" > ai_response.txt
+          llama.cpp/build/main -m models/llm.ggml --temp 0.7 --n_predict 512 -p "$(cat prompt.txt)" > ai_response.txt
           sed -n '/^diff /,/^$/p' ai_response.txt > ai_patch.diff || true
           if [ -s ai_patch.diff ]; then
             echo "==> Applying patch"
