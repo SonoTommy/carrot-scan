@@ -8,7 +8,7 @@
     },
     {
       "role": "user",
-      "content": "Project version: '1.2.25'. Please generate a unified diff patch that:\\n1. Creates a new file src/feature-'1.2.25'.js exporting a function stub named feature1_2_25.\\n2. Appends a '## Usage' section at the end of README.md explaining how to import and use this new feature.\\nDo not modify any other files.\\n\\nExample usage:\\n\\nimport { feature1_2_25 } from './src/feature-1.2.25';\\n\\nfeature1_2_25();"
+      "content": "Project version: '1.2.26'. Please generate a unified diff patch that:\\n1. Creates a new file src/feature-'1.2.26'.js exporting a function stub named feature1_2_26.\\n2. Appends (or updates) a '## Usage' section at the end of README.md explaining how to import and use this new feature.\\n3. Appends a '### Scanner API' section in README.md that documents a new optional 'options' parameter for the scanner with a short code snippet.\\n4. At the end of scanner.js, append JSDoc comments and a helper function: \\n   export function initScanner(options = {}) { /* TODO implement */ }\\n   (add these lines after the current last line, do not remove anything).\\n\\nConstraints:\\n* Only **add** lines; do not delete or modify existing ones (no lines starting with '-').\\n* Only modify README.md and scanner.js in addition to creating the new feature file.\\n* Keep changes minimal, safe, and idempotent (running again should not duplicate content).\\n\\nExample usage for README:\\n\\n```js\\nimport { feature1_2_26 } from './src/feature-1.2.26';\\n\\nfeature1_2_26();\\n```"
     }
   ]
 }
