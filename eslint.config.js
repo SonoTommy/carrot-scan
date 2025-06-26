@@ -5,8 +5,11 @@ import prettier from 'eslint-plugin-prettier';
 // Recommended rules from eslint‑plugin‑import (converted for flat config)
 const importRecommendedRules = importPlugin.configs.recommended.rules;
 
+// Remove the unsupported `root` key from @eslint/js recommended flat config
+const { root: _removedRoot, ...eslintRecommendedNoRoot } = js.configs.recommended;
+
 export default [
-  js.configs.recommended, // base ESLint rules
+  eslintRecommendedNoRoot, // base ESLint rules (root key removed)
   {
     plugins: {
       import: importPlugin,
