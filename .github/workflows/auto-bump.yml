@@ -18,7 +18,7 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0   # necessario per tag/commit history
+          fetch-depth: 0 # necessario per tag/commit history
           token: ${{ secrets.GH_PAT }}
 
       - name: Set up Node.js
@@ -57,9 +57,9 @@ jobs:
         uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ secrets.GH_PAT }}
-          commit-message: "chore(release): bump version to ${{ steps.bump.outputs.new-version }}"
+          commit-message: 'chore(release): bump version to ${{ steps.bump.outputs.new-version }}'
           branch: auto-bump-${{ steps.bump.outputs.new-version }}
-          title: "🔼 Bump to ${{ steps.bump.outputs.new-version }}"
+          title: '🔼 Bump to ${{ steps.bump.outputs.new-version }}'
           body: |
             - Version bumped automatically  
             - Lint/format fixes applied
@@ -141,7 +141,7 @@ jobs:
         with:
           branch: auto-fix
           create_branch: true
-          commit_message: "style: auto-lint & format [skip ci]"
+          commit_message: 'style: auto-lint & format [skip ci]'
           push_options: '--force-with-lease'
           status_options: '-uno'
 
@@ -149,9 +149,9 @@ jobs:
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GH_PAT }}
-          commit-message: "style: auto-lint & format"
+          commit-message: 'style: auto-lint & format'
           branch: auto-fix
-          title: "♻️ Auto-lint & format"
+          title: '♻️ Auto-lint & format'
           body: |
             This PR is generated automatically every 10 minutes.
             It fixes lint errors and applies Prettier formatting.

@@ -6,5 +6,5 @@ export default {
   collectCoverage: true,
   coverageDirectory: 'coverage',
 
-  testMatch: ['**/scan-test/**/*.test.js']
+  testMatch: ['**/scan-test/**/*.test.js'],
 };
