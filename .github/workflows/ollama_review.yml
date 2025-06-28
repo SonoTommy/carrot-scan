@@ -86,10 +86,13 @@ jobs:
 
       # 6. Applica la patch e pusha un branch
       - name: Apply patch & push branch
+        id: applypatch
         if: steps.genpatch.outputs.has_patch == 'true'
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
         run: |
+          # Imposta created_branch a false inizialmente
+          echo "created_branch=false" >> "$GITHUB_OUTPUT"
           # Verifica che la patch sia applicabile in modo pulito
           # Normalizza l'header nel caso manchino i prefissi "a/" e "b/"
           sed -E -i 's|^diff --git ([ab]/)?([^ ]+) ([ab]/)?([^ ]+)$|diff --git a/\2 b/\4|' ollama.patch
@@ -111,6 +114,7 @@ jobs:
               APPLY_CMD="patch -p1 < ollama.patch"
             else
               echo "❌ Patch non applicabile né con git apply né con patch; salto branch/PR."
+              echo "created_branch=false" >> "$GITHUB_OUTPUT"
               exit 0
             fi
           fi
@@ -122,12 +126,13 @@ jobs:
           git add -A
           git commit -m "chore(ollama): AI fixes & docs"
           BRANCH="ollama-fix-${{ github.run_id }}"
+          echo "created_branch=true" >> "$GITHUB_OUTPUT"
           git switch -c "$BRANCH"
           git push -u origin "$BRANCH"
 
       # 7. Crea la pull-request con i miglioramenti
       - name: Open PR with Ollama improvements
-        if: steps.genpatch.outputs.has_patch == 'true'
+        if: steps.applypatch.outputs.created_branch == 'true'
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GH_PAT }}
