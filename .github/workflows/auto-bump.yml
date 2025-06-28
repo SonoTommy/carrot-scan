@@ -78,7 +78,7 @@ jobs:
           if npm view carrot-scan@$CURRENT_VERSION --json >/dev/null 2>&1; then
             echo "Version $CURRENT_VERSION already exists – skipping publish."
           else
-            npm publish --access public
+            yarn publish --non-interactive
           fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
