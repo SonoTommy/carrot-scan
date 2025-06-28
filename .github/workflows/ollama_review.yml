@@ -134,16 +134,16 @@ jobs:
           git switch -c "$BRANCH"
           git push -u origin "$BRANCH"
 
-            # 7. Crea la pull-request con i miglioramenti
+      # 7. Crea la pull-request con i miglioramenti
       - name: Open PR with Ollama improvements
         if: steps.applypatch.outputs.created_branch == 'true'
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GH_PAT }}
           branch: ollama-fix-${{ github.run_id }}
-          base: main          # <-- questa riga elimina l’errore
+          base: main
           title: "🤖 Ollama automated improvements"
           body: |
-            Patch generata da **deepseek-r1:1.5b**.
-            Contiene bug-fix, refactor e miglioramenti di documentazione.
+            Patch generata automaticamente dal modello **codellama:7b-code**.
+            Contiene bug‑fix, refactor o aggiornamenti di documentazione.
           labels: ai, ollama
