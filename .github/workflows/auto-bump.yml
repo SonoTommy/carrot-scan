@@ -45,25 +45,11 @@ jobs:
       # 5. Installa dipendenze (serve a yarn publish)
       - run: npm install
 
-      # 6. Commit & PR con la nuova versione
-      - name: Push changes & create PR
-        id: create_pr
-        uses: peter-evans/create-pull-request@v5
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: 'chore(release): bump version to ${{ steps.bump.outputs.new-version }}'
-          branch: auto-bump-${{ steps.bump.outputs.new-version }}
-          title: '🔼 Bump to ${{ steps.bump.outputs.new-version }}'
-          body: 'Version bumped automatically.'
-          delete-branch: true
-
-      - name: Enable auto-merge
-        if: steps.create_pr.outputs.pull-request-operation == 'created'
-        uses: peter-evans/enable-pull-request-automerge@v3
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          pull-request-number: ${{ steps.create_pr.outputs.pull-request-number }}
-          merge-method: squash
+      # 6. Push bumped version directly to main
+      - name: Push bumped version
+        run: |
+          git remote set-url origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}"
+          git push origin main
 
       # 7. Configura autenticazione npm
       - name: Configure npm auth
