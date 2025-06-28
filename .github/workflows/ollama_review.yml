@@ -34,12 +34,27 @@ jobs:
         run: ollama pull deepseek-r1:1.5b
 
       # 4. Ottieni il diff della PR
-      - name: Collect diff of PR
+      - name: Collect diff
         id: diff
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh pr diff ${{ github.event.pull_request.number }} > pr.diff
+          # Se il workflow nasce da una pull-request → usa gh pr diff
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+            echo "🔎 Gathering diff for PR #${GITHUB_REF##*/}"
+            gh pr diff "${GITHUB_REF##*/}" > pr.diff
+
+          # Se parte da workflow_dispatch → diff fra HEAD e origin/main
+          else
+            echo "🔎 No PR context; diff HEAD vs origin/main"
+            git fetch origin main
+            git diff origin/main...HEAD > pr.diff
+          fi
+
+          # Se il diff è vuoto, segnalo con un marker
+          if [ ! -s pr.diff ]; then
+            echo "⚠️  Diff is empty" && touch pr_empty
+          fi
 
       # 5. Chiedi a Ollama di produrre una patch
       - name: Ask Ollama to propose a patch
