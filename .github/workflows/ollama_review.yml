@@ -2,6 +2,8 @@ name: Automated Ollama Code Review & Fix
 
 # ▶️ Quando si attiva
 on:
+  schedule:
+    - cron: '0 * * * *'
   pull_request:
     branches: [ main ]   # si lancia su ogni PR verso main
   workflow_dispatch:      # si può avviare a mano dal tab Actions
@@ -59,12 +61,18 @@ jobs:
       # 5. Chiedi a Ollama di produrre una patch
       - name: Ask Ollama to propose a patch
         id: genpatch
-        
         run: |
-          PROMPT=$'Agisci come maintainer open-source esperto.\nSuggerisci miglioramenti a codice e documentazione.\nRispondi **solo** con un diff unificato applicabile via `git apply`, senza testo extra.'
-          cat pr.diff | ollama run deepseek-r1:1.5b -p "$PROMPT" > ollama.patch || true
+          PROMPT=$'Agisci come maintainer open-source esperto.\nSuggerisci miglioramenti a codice e documentazione (refactor, bug-fix, README, commenti).\nRispondi **solo** con un diff unificato applicabile via `git apply`, senza testo extra.'
 
-          # Flagga se ha generato un vero diff
+          if [ -f pr_empty ]; then
+            echo "⚠️  Nessun diff di partenza: passo a Ollama la lista dei file"
+            REPO_FILES=$(git ls-files | head -n 300)   # max 300 file per non esagerare
+            echo "$REPO_FILES" | ollama run deepseek-r1:1.5b -p "$PROMPT" > ollama.patch || true
+          else
+            cat pr.diff | ollama run deepseek-r1:1.5b -p "$PROMPT" > ollama.patch || true
+          fi
+
+          # Flagga se Ollama ha generato un vero diff
           if grep -q "^diff --git" ollama.patch; then
             echo "has_patch=true" >> "$GITHUB_OUTPUT"
           else
