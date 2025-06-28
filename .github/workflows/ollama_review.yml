@@ -33,7 +33,7 @@ jobs:
 
       # 3. Pre-scarica il modello (facoltativo ma più veloce)
       - name: Pull model
-        run: ollama pull deepseek-r1:1.5b
+        run: ollama pull codellama:7b-code
 
       # 4. Ottieni il diff della PR
       - name: Collect diff
@@ -74,7 +74,7 @@ jobs:
           fi
 
           # Invia il prompt tramite stdin per evitare problemi di parsing
-          printf '%s\n' "$FINAL_PROMPT" | ollama run deepseek-r1:1.5b > ollama.patch || true
+          printf '%s\n' "$FINAL_PROMPT" | ollama run codellama:7b-code > ollama.patch || true
 
           # Ripulisce eventuale testo prima del diff
           sed -n '/^diff --git /,$p' ollama.patch > _clean && mv _clean ollama.patch
