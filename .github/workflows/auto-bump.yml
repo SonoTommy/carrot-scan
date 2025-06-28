@@ -177,7 +177,7 @@ jobs:
           git diff HEAD~1 HEAD > diff.patch
           
           # Feed the diff to Gemini via STDIN
-          cat diff.patch | npx -y @google/gemini-cli -m gemini-pro \
+          cat diff.patch | npx -y @google/gemini-cli -m gemini-1.0-pro \
             -p "Sei un maintainer OSS: sul diff qui sotto, fornisci SOLO un diff unificato da applicare con 'git apply' che aggiunga piccoli fix, feature utili o miglioramenti di documentazione. Nessun altro testo." \
             > gemini_suggest.patch
           
