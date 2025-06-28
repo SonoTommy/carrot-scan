@@ -5,8 +5,8 @@ on:
   schedule:
     - cron: '0 * * * *'
   pull_request:
-    branches: [ main ]   # si lancia su ogni PR verso main
-  workflow_dispatch:      # si può avviare a mano dal tab Actions
+    branches: [main] # si lancia su ogni PR verso main
+  workflow_dispatch: # si può avviare a mano dal tab Actions
 
 # ▶️ Permessi minimi per committare e aprire PR
 permissions:
@@ -142,7 +142,7 @@ jobs:
           token: ${{ secrets.GH_PAT }}
           branch: ollama-fix-${{ github.run_id }}
           base: main
-          title: "🤖 Ollama automated improvements"
+          title: '🤖 Ollama automated improvements'
           body: |
             Patch generata automaticamente dal modello **codellama:7b-code**.
             Contiene bug‑fix, refactor o aggiornamenti di documentazione.

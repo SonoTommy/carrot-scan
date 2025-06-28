@@ -1,15 +1,15 @@
 # .github/actions/ollama-code-review/action.yml
-name: "Ollama Code Review"
-description: "Generate a code-review with Ollama and print it to the log"
+name: 'Ollama Code Review'
+description: 'Generate a code-review with Ollama and print it to the log'
 
 inputs:
   llm-model:
     description: "Model identifier to pass to 'ollama run'"
     required: false
-    default: "deepseek-r1:1.5b"
+    default: 'deepseek-r1:1.5b'
 
 runs:
-  using: "composite"
+  using: 'composite'
   steps:
     - name: Install Ollama CLI
       shell: bash

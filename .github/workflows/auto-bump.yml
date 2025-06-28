@@ -156,8 +156,6 @@ jobs:
             This PR is generated automatically every 10 minutes.
             It fixes lint errors and applies Prettier formatting.
 
-
-
   deepseek-review:
     needs: bump-patch
     runs-on: ubuntu-latest
