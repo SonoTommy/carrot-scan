@@ -35,4 +35,4 @@ jobs:
           VALIDATE_YAML: true
           # Configurazioni aggiuntive
           DEFAULT_BRANCH: main
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
