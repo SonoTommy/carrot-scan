@@ -71,6 +71,8 @@ jobs:
           fetch-depth: 0
       - name: Configure npm auth
         run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+      - name: Bump version for publish
+        run: yarn version --patch --no-git-tag-version
       - name: Publish package
         run: |
           CURRENT_VERSION=$(node -p "require('./package.json').version")
