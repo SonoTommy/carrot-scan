@@ -97,3 +97,7 @@ jobs:
           yarn publish --non-interactive
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Wait after publish
+        run: |
+          echo "Waiting 5 minutes before releasing concurrency lock"
+          sleep 300
