@@ -172,8 +172,9 @@ jobs:
 
       - name: Generate patch with Gemini CLI Action
         id: gpatch
-        uses: google-gemini/gemini-cli-action@v0.1
+        uses: google-gemini/gemini-cli-action@0.1.2
         with:
+          github_token: ${{ secrets.GH_PAT }}
           api_key: ${{ secrets.GEMINI_API_KEY }}
           model: gemini-2.5-pro
           input_file: diff.patch
