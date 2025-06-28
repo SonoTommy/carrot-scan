@@ -176,10 +176,9 @@ jobs:
           # Capture diff of the commit that bumped the version
           git diff HEAD~1 HEAD > diff.patch
           
-          # Ask Gemini to produce an IMPROVEMENT patch (unified diff only)
-          npx -y @google/gemini-cli chat -m gemini-pro \
-            -p "Agisci come un maintainer OSS: migliora il pacchetto carrot‑scan aggiungendo piccole feature utili, fix e documentazione. Rispondi **solo** con un diff unificato applicabile con 'git apply', senza testo extra." \
-            -i diff.patch \
+          # Feed the diff to Gemini via STDIN
+          cat diff.patch | npx -y @google/gemini-cli -m gemini-pro \
+            -p "Sei un maintainer OSS: sul diff qui sotto, fornisci SOLO un diff unificato da applicare con 'git apply' che aggiunga piccoli fix, feature utili o miglioramenti di documentazione. Nessun altro testo." \
             > gemini_suggest.patch
           
           # Indica se il patch contiene righe diff
