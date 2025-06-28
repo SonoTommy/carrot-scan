@@ -169,7 +169,12 @@ jobs:
 
       - name: Install Gemini CLI
         run: |
-          curl -L https://raw.githubusercontent.com/google-gemini/gemini-cli/main/install.sh | bash
+          # Try official install script (repo recently renamed)
+          set -e
+          curl -fsSL https://raw.githubusercontent.com/google-gemini/gemini/main/install.sh | bash || {
+            echo "Fallback: install via npm."
+            npm install -g @google/gemini-cli
+          }
           gemini --version
 
       - name: Generate patch with Gemini
