@@ -100,13 +100,23 @@ jobs:
             inblock && (/^--- / || /^+++ / || /^@@ / || /^[ +-]/) {print; next}
             {inblock=0}
           ' ollama.patch > _clean && mv _clean ollama.patch
-          if ! git apply --check ollama.patch ; then
-            echo "❌ Patch non applicabile in modo pulito, salto creazione branch/PR."
-            exit 0    # termina lo step con successo così il job rimane verde
+          # Primo tentativo: git apply --check
+          if git apply --check ollama.patch ; then
+            echo "✅ Patch valida secondo git apply --check"
+            APPLY_CMD="git apply ollama.patch"
+          else
+            echo "🔄 git apply --check ha fallito; provo con GNU patch in dry‑run"
+            if patch -p1 --quiet --dry-run < ollama.patch ; then
+              echo "✅ Patch accettata da 'patch' – userò patch -p1"
+              APPLY_CMD="patch -p1 < ollama.patch"
+            else
+              echo "❌ Patch non applicabile né con git apply né con patch; salto branch/PR."
+              exit 0
+            fi
           fi
 
-          # Applica la patch e crea un branch
-          git apply ollama.patch
+          # Applica la patch con il comando selezionato
+          eval "$APPLY_CMD"
           git config user.name "ollama-bot"
           git config user.email "ollama-bot@users.noreply.github.com"
           git add -A
