@@ -55,9 +55,14 @@ jobs:
           branch: auto-bump-${{ steps.bump.outputs.new-version }}
           title: '🔼 Bump to ${{ steps.bump.outputs.new-version }}'
           body: 'Version bumped automatically.'
-          merge: true
-          merge_method: squash
-          delete_branch: true
+          delete-branch: true
+
+      - name: Merge pull request
+        if: ${{ steps.create_pr.outputs.pull-request-number }}
+        run: |
+          gh pr merge ${{ steps.create_pr.outputs.pull-request-number }} --squash --delete-branch --yes
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
 
       # 7. Configura autenticazione npm
       - name: Configure npm auth
