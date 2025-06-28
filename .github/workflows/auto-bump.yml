@@ -19,7 +19,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GH_PAT }}
 
       # 2. Setup Node
       - name: Set up Node.js
@@ -45,11 +45,25 @@ jobs:
       # 5. Installa dipendenze (serve a yarn publish)
       - run: npm install
 
-      # 6. Push bumped version directly to main
-      - name: Push bumped version
-        run: |
-          git remote set-url origin "https://x-access-token:${{ secrets.GH_PAT }}@github.com/${{ github.repository }}"
-          git push origin main
+      # 6. Create PR with bumped version
+      - name: Create Pull Request
+        id: create_pr
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GH_PAT }}
+          commit-message: 'chore(release): bump version to ${{ steps.bump.outputs.new-version }}'
+          branch: auto-bump-${{ steps.bump.outputs.new-version }}
+          title: '🔼 Bump to ${{ steps.bump.outputs.new-version }}'
+          body: 'Version bumped automatically.'
+          delete-branch: true
+
+      - name: Enable auto-merge
+        if: steps.create_pr.outputs.pull-request-operation == 'created'
+        uses: peter-evans/enable-pull-request-automerge@v3
+        with:
+          token: ${{ secrets.GH_PAT }}
+          pull-request-number: ${{ steps.create_pr.outputs.pull-request-number }}
+          merge-method: squash
 
       # 7. Configura autenticazione npm
       - name: Configure npm auth
