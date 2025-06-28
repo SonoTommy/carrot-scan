@@ -167,25 +167,31 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GH_PAT }}
 
+      - name: Capture diff
+        run: git diff HEAD~1 HEAD > diff.patch
 
-      - name: Generate patch with Gemini
+      - name: Generate patch with Gemini CLI Action
         id: gpatch
-        env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        uses: google-gemini/gemini-cli-action@v0.1
+        with:
+          api_key: ${{ secrets.GEMINI_API_KEY }}
+          model: gemini-2.5-pro
+          input_file: diff.patch
+          output_file: gemini_suggest.patch
+          prompt: |
+            Sei un maintainer OSS: sul diff fornito, restituisci **solo** un patch unificato da applicare con `git apply`, che aggiunga micro‑feature utili, fix o miglioramenti di documentazione al progetto carrot‑scan.
+
+      - name: Check if Gemini produced a diff
+        id: diffcheck
         run: |
-          # Capture diff of the commit that bumped the version
-          git diff HEAD~1 HEAD > diff.patch
-          
-          # Feed the diff to Gemini via STDIN
-          cat diff.patch | npx -y @google/gemini-cli -m gemini-1.0-pro-latest \
-            -p "Sei un maintainer OSS: sul diff qui sotto, fornisci SOLO un diff unificato da applicare con 'git apply' che aggiunga piccoli fix, feature utili o miglioramenti di documentazione. Nessun altro testo." \
-            > gemini_suggest.patch
-          
-          # Indica se il patch contiene righe diff
-          echo "HAS_DIFF=$(grep -E '^diff --git' -q gemini_suggest.patch && echo true || echo false)" >> $GITHUB_OUTPUT
+          if grep -q "^diff --git" gemini_suggest.patch; then
+            echo "has_diff=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_diff=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Apply patch (if any) and push
-        if: ${{ steps.gpatch.outputs.HAS_DIFF == 'true' }}
+        if: ${{ steps.diffcheck.outputs.has_diff == 'true' }}
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
         run: |
@@ -197,16 +203,16 @@ jobs:
           COMMIT_MSG="chore(gemini): auto improvements after ${GITHUB_SHA::7}"
           git commit -m "$COMMIT_MSG"
 
-          BRANCH="gemini-improve-${{ needs.bump-patch.outputs.new-version }}"
+          BRANCH="gemini-improve-${{ github.run_id }}"
           git switch -c "$BRANCH"
           git push -u origin "$BRANCH"
 
       - name: Open PR with Gemini improvements
-        if: ${{ steps.gpatch.outputs.HAS_DIFF == 'true' }}
+        if: ${{ steps.diffcheck.outputs.has_diff == 'true' }}
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GH_PAT }}
-          branch: ${{ steps.gpatch.outputs.HAS_DIFF == 'true' && 'gemini-improve-' || '' }}${{ needs.bump-patch.outputs.new-version }}
+          branch: gemini-improve-${{ github.run_id }}
           title: "🤖 Gemini auto‑improvements for ${{ needs.bump-patch.outputs.new-version }}"
           commit-message: "chore(gemini): apply AI improvements"
           body: |
