@@ -5,47 +5,45 @@ permissions:
   pull-requests: write
 
 on:
-  # ogni 10 minuti
   schedule:
-    - cron: '*/5 * * * *'
+    - cron: '*/5 * * * *'   # every 5 minutes
+    - cron: '0 * * * *'     # fallback hourly at minute 0
   workflow_dispatch:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: auto-bump
+  cancel-in-progress: false
 
 jobs:
-  bump-and-publish:
+  bump:
+    if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     steps:
-      # 1. Clona la repo
       - name: Checkout repo
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
           token: ${{ secrets.GH_PAT }}
-
-      # 2. Setup Node
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '20'
           cache: 'npm'
-
-      # 3. Configura Git
       - name: Configure Git
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-
-      # 4. Bump patch version (es. 1.2.3 → 1.2.4)
       - name: Bump patch version
         id: bump
         run: |
           BUMP_OUTPUT=$(npm version patch -m "chore(release): bump version to %s")
           VERSION=${BUMP_OUTPUT#v}
           echo "new-version=$VERSION" >> $GITHUB_OUTPUT
-
-      # 5. Installa dipendenze (serve a yarn publish)
-      - run: npm install
-
-      # 6. Create PR with bumped version
+      - name: Install dependencies
+        run: npm install
       - name: Create Pull Request
         id: create_pr
         uses: peter-evans/create-pull-request@v7
@@ -56,27 +54,23 @@ jobs:
           title: '🔼 Bump to ${{ steps.bump.outputs.new-version }}'
           body: 'Version bumped automatically.'
           delete-branch: true
-
-
-      - name: Merge pull request
+      - name: Merge Pull Request
         if: ${{ steps.create_pr.outputs.pull-request-number }}
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
         run: |
           gh pr merge ${{ steps.create_pr.outputs.pull-request-number }} --squash --delete-branch --repo ${{ github.repository }}
 
+  publish:
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    steps:
       - name: Checkout main branch
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-          token: ${{ secrets.GH_PAT }}
-          ref: main
-
-      # 7. Configura autenticazione npm
       - name: Configure npm auth
         run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
-
-      # 8. Pubblica su npm (salta se esiste già)
       - name: Publish package
         run: |
           CURRENT_VERSION=$(node -p "require('./package.json').version")
@@ -84,7 +78,7 @@ jobs:
           if npm view carrot-scan@$CURRENT_VERSION --json >/dev/null 2>&1; then
             echo "Version $CURRENT_VERSION already exists – skipping publish."
           else
-            yarn publish --non-interactive
+            npm publish --access public
           fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
