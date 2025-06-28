@@ -60,7 +60,7 @@ jobs:
       - name: Ask Ollama to propose a patch
         id: genpatch
         run: |
-          BASE_PROMPT=$'Agisci come maintainer open‑source esperto.\nSuggerisci miglioramenti a codice e documentazione (refactor, bug‑fix, README, commenti).\nRispondi **esclusivamente** con un diff unificato valido per `git apply`, senza testo extra, senza markdown, senza spiegazioni.\nIl diff deve iniziare con la riga `diff --git a/`.\n\n'
+          BASE_PROMPT=$'Agisci come maintainer open‑source esperto.\nSuggerisci miglioramenti a codice e documentazione (refactor, bug‑fix, README, commenti).\nRispondi **esclusivamente** con un diff unificato **completo** e valido per `git apply`, senza testo extra né markdown.\nOgni blocco diff deve:\n- iniziare con `diff --git a/... b/...`\n- avere subito dopo la riga `index <hash1>..<hash2>`\n- includere le righe `--- a/...` e `+++ b/...`\n- contenere almeno un hunk `@@`\n\nL’intero output deve iniziare con `diff --git a/`.\n\n'
 
           # Se non abbiamo un diff di partenza, passiamo la lista file
           if [ -f pr_empty ]; then
@@ -93,6 +93,13 @@ jobs:
           # Verifica che la patch sia applicabile in modo pulito
           # Normalizza l'header nel caso manchino i prefissi "a/" e "b/"
           sed -E -i 's|^diff --git ([ab]/)?([^ ]+) ([ab]/)?([^ ]+)$|diff --git a/\2 b/\4|' ollama.patch
+          # Filtra i blocchi diff che non contengono la riga 'index' o un hunk valido
+          awk '
+            /^diff --git / {print; inblock=1; next}
+            inblock && /^index [0-9a-f]+\.\.[0-9a-f]+/ {print; next}
+            inblock && (/^--- / || /^+++ / || /^@@ / || /^[ +-]/) {print; next}
+            {inblock=0}
+          ' ollama.patch > _clean && mv _clean ollama.patch
           if ! git apply --check ollama.patch ; then
             echo "❌ Patch non applicabile in modo pulito, salto creazione branch/PR."
             exit 0    # termina lo step con successo così il job rimane verde
