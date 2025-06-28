@@ -168,48 +168,9 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GH_PAT }}
 
-      - name: Capture diff since last commit
-        run: git diff HEAD~1 HEAD > diff.patch
-
-      - name: Install Ollama CLI
-        run: |
-          curl -fsSL https://ollama.com/download/Ollama -o ollama
-          chmod +x ollama
-          sudo mv ollama /usr/local/bin
-          ollama --version
-
-      - name: Ask Deepseek to suggest an improvement patch
-        id: opatch
-        run: |
-          cat diff.patch | ollama run deepseek-r1:1.5b > deepseek_suggest.patch || true
-          if grep -q "^diff --git" deepseek_suggest.patch; then
-            echo "has_diff=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "has_diff=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Apply patch and push branch
-        if: ${{ steps.opatch.outputs.has_diff == 'true' }}
-        env:
-          GH_TOKEN: ${{ secrets.GH_PAT }}
-        run: |
-          git config user.name "deepseek-bot"
-          git config user.email "deepseek-bot@users.noreply.github.com"
-          git apply deepseek_suggest.patch
-          git add -A
-          git commit -m "chore(deepseek): automated improvements"
-          BRANCH="deepseek-improve-${{ github.run_id }}"
-          git switch -c "$BRANCH"
-          git push -u origin "$BRANCH"
-
-      - name: Open PR with Deepseek improvements
-        if: ${{ steps.opatch.outputs.has_diff == 'true' }}
-        uses: peter-evans/create-pull-request@v6
+      - name: Ollama Code Review
+        uses: zakerby/gh-code-review@v0.0.2
         with:
-          token: ${{ secrets.GH_PAT }}
-          branch: deepseek-improve-${{ github.run_id }}
-          title: "🤖 Deepseek automated improvements"
-          body: |
-            This PR was generated automatically by the Deepseek model.
-            It contains minor fixes, features, or documentation updates aimed at improving user experience and boosting npm downloads.
-          labels: ai, deepseek
+          llm-model: 'deepseek-r1:1.5b'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
