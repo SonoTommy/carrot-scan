@@ -55,6 +55,9 @@ jobs:
           branch: auto-bump-${{ steps.bump.outputs.new-version }}
           title: '🔼 Bump to ${{ steps.bump.outputs.new-version }}'
           body: 'Version bumped automatically.'
+          merge: true
+          merge_method: squash
+          delete_branch: true
 
       # 7. Configura autenticazione npm
       - name: Configure npm auth
