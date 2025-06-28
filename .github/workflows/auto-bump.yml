@@ -98,21 +98,6 @@ jobs:
           pull-request-number: ${{ steps.create_pr.outputs.pull-request-number }}
           merge-method: squash
 
-      - name: Configure npm authentication
-        run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
-
-      - name: Publish package
-        run: |
-          CURRENT_VERSION=$(node -p "require('./package.json').version")
-          echo "Attempting to publish version $CURRENT_VERSION"
-          if npm view carrot-scan@$CURRENT_VERSION --json >/dev/null 2>&1; then
-            echo "Version $CURRENT_VERSION is already on the registry – skipping publish."
-          else
-            yarn publish --non-interactive
-          fi
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
   auto-fix:
     runs-on: ubuntu-latest
     steps:
@@ -183,11 +168,22 @@ jobs:
           cat diff.patch | gemini -m gemini-2.5-pro \
             -p "Agisci come maintainer open‑source per il progetto carrot‑scan. Rispondi **solo** con un diff unificato applicabile con 'git apply' che introduca piccoli fix, feature o miglioramenti di documentazione, senza testo aggiuntivo." \
             > gemini_suggest.patch || true   # non fallire se CLI restituisce errore vuoto
+
           if grep -q "^diff --git" gemini_suggest.patch; then
             echo "has_diff=true" >> "$GITHUB_OUTPUT"
           else
             echo "has_diff=false" >> "$GITHUB_OUTPUT"
           fi
+
+      - name: Gemini project analysis (English)
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          gemini --all_files -m gemini-2.5-pro \
+            -p "You are a documentation bot. Provide a concise (max 200 words) English description of this repository's purpose, architecture, and key modules. Output plain markdown." \
+            > analysis.md
+          echo '### Gemini Project Analysis' >> "$GITHUB_STEP_SUMMARY"
+          cat analysis.md >> "$GITHUB_STEP_SUMMARY"
 
       - name: Apply patch and push branch
         if: ${{ steps.gpatch.outputs.has_diff == 'true' }}
@@ -214,3 +210,33 @@ jobs:
             This PR was generated automatically by Gemini CLI.
             It contains minor fixes/features/documentation updates aimed at improving user experience and boosting npm downloads.
           labels: ai, gemini
+
+
+  publish-package:
+    needs: [gemini-review]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Configure npm authentication
+        run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+
+      - name: Yarn publish
+        run: |
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          if npm view carrot-scan@$CURRENT_VERSION --json >/dev/null 2>&1; then
+            echo "Version $CURRENT_VERSION already exists – skipping publish."
+          else
+            yarn publish --non-interactive
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
