@@ -1,22 +1,83 @@
-name: Automated Ollama Code Review
+name: Automated Ollama Code Review & Fix
 
+# ▶️ Quando si attiva
 on:
-  workflow_dispatch:
   pull_request:
-    branches:
-      - main
+    branches: [ main ]   # si lancia su ogni PR verso main
+  workflow_dispatch:      # si può avviare a mano dal tab Actions
+
+# ▶️ Permessi minimi per committare e aprire PR
+permissions:
+  contents: write
+  pull-requests: write
 
 jobs:
-  ollama_review:
+  ollama_review_apply:
     runs-on: ubuntu-latest
-    name: Ollama Code Review Job
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v2
 
-      - name: Ollama Code Review
-        uses: ./.github/actions/ollama-code-review
+    steps:
+      # 1. Checkout repo
+      - name: Checkout repository
+        uses: actions/checkout@v4
         with:
-          llm-model: 'codegemma'
+          fetch-depth: 0
+          token: ${{ secrets.GH_PAT }}
+
+      # 2. Installa Ollama
+      - name: Install Ollama
+        run: |
+          curl -fsSL https://ollama.com/install.sh | sh
+          ollama --version
+
+      # 3. Pre-scarica il modello (facoltativo ma più veloce)
+      - name: Pull model
+        run: ollama pull deepseek-r1:1.5b
+
+      # 4. Ottieni il diff della PR
+      - name: Collect diff of PR
+        id: diff
+        run: |
+          gh pr diff ${{ github.event.pull_request.number }} > pr.diff
+
+      # 5. Chiedi a Ollama di produrre una patch
+      - name: Ask Ollama to propose a patch
+        id: genpatch
+        
+        run: |
+          PROMPT=$'Agisci come maintainer open-source esperto.\nSuggerisci miglioramenti a codice e documentazione.\nRispondi **solo** con un diff unificato applicabile via `git apply`, senza testo extra.'
+          cat pr.diff | ollama run deepseek-r1:1.5b -p "$PROMPT" > ollama.patch || true
+
+          # Flagga se ha generato un vero diff
+          if grep -q "^diff --git" ollama.patch; then
+            echo "has_patch=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_patch=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # 6. Applica la patch e pusha un branch
+      - name: Apply patch & push branch
+        if: steps.genpatch.outputs.has_patch == 'true'
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          git apply ollama.patch
+          git config user.name "ollama-bot"
+          git config user.email "ollama-bot@users.noreply.github.com"
+          git add -A
+          git commit -m "chore(ollama): AI fixes & docs"
+          BRANCH="ollama-fix-${{ github.run_id }}"
+          git switch -c "$BRANCH"
+          git push -u origin "$BRANCH"
+
+      # 7. Crea la pull-request con i miglioramenti
+      - name: Open PR with Ollama improvements
+        if: steps.genpatch.outputs.has_patch == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GH_PAT }}
+          branch: ollama-fix-${{ github.run_id }}
+          title: "🤖 Ollama automated improvements"
+          body: |
+            Patch generata da **deepseek-r1:1.5b**.
+            Contiene bug-fix, refactor e miglioramenti di documentazione.
+          labels: ai, ollama
