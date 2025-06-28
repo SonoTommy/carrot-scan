@@ -152,8 +152,6 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GH_PAT }}
 
-      - name: Capture diff since last commit
-        run: git diff HEAD~1 HEAD > diff.patch
 
       - name: Install Gemini CLI
         run: |
@@ -165,10 +163,12 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
-          cat diff.patch | gemini -m gemini-2.5-pro \
-            -p "Agisci come maintainer open‑source per il progetto carrot‑scan. Rispondi **solo** con un diff unificato applicabile con 'git apply' che introduca piccoli fix, feature o miglioramenti di documentazione, senza testo aggiuntivo." \
-            > gemini_suggest.patch || true   # non fallire se CLI restituisce errore vuoto
+          # Scan the whole repository and let Gemini decide improvements
+          gemini --all_files -m gemini-2.5-pro \
+            -p "Act as an open‑source maintainer. Provide ONLY a unified diff (git apply format) containing small useful fixes, refactors, or documentation improvements for the carrot‑scan project. No extra commentary." \
+            > gemini_suggest.patch || true   # don't fail if model returns nothing
 
+          # Flag whether we actually got a diff
           if grep -q "^diff --git" gemini_suggest.patch; then
             echo "has_diff=true" >> "$GITHUB_OUTPUT"
           else
