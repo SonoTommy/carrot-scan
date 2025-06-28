@@ -7,7 +7,7 @@ permissions:
 on:
   # ogni 10 minuti
   schedule:
-    - cron: '*/10 * * * *'
+    - cron: '*/5 * * * *'
   workflow_dispatch:
 
 jobs:
