@@ -37,7 +37,7 @@ jobs:
       - name: Collect diff of PR
         id: diff
         env:
-          GH_TOKEN: $({{ secrets.GH_PAT }})
+          GH_TOKEN: ${{ github.token }}
         run: |
           gh pr diff ${{ github.event.pull_request.number }} > pr.diff
 
