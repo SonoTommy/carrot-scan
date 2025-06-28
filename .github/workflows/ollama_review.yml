@@ -60,14 +60,18 @@ jobs:
       - name: Ask Ollama to propose a patch
         id: genpatch
         run: |
-          PROMPT=$'Agisci come maintainer open-source esperto.\nSuggerisci miglioramenti a codice e documentazione (refactor, bug-fix, README, commenti).\nRispondi **solo** con un diff unificato applicabile via `git apply`, senza testo extra.'
+          BASE_PROMPT=$'Agisci come maintainer open‑source esperto.\nSuggerisci miglioramenti a codice e documentazione (refactor, bug‑fix, README, commenti).\nRispondi **solo** con un diff unificato applicabile via `git apply`, senza testo extra.\nAssicurati che inizi con `diff --git`.\n\n'
 
+          # Se non abbiamo un diff di partenza, passiamo la lista file
           if [ -f pr_empty ]; then
             echo "⚠️  Nessun diff di partenza: passo a Ollama la lista dei file"
-            REPO_FILES=$(git ls-files | head -n 300)   # max 300 file per non esagerare
-            echo "$REPO_FILES" | ollama run deepseek-r1:1.5b "$PROMPT" > ollama.patch || true
+            REPO_FILES=$(git ls-files | head -n 200)             # limitiamo a 200 file
+            FINAL_PROMPT="${BASE_PROMPT}Ecco i file attuali del repo:\n${REPO_FILES}"
+            ollama run deepseek-r1:1.5b "$FINAL_PROMPT" > ollama.patch || true
           else
-            cat pr.diff | ollama run deepseek-r1:1.5b "$PROMPT" > ollama.patch || true
+            DIFF_CONTENT=$(cat pr.diff)
+            FINAL_PROMPT="${BASE_PROMPT}Ecco il diff corrente:\n${DIFF_CONTENT}"
+            ollama run deepseek-r1:1.5b "$FINAL_PROMPT" > ollama.patch || true
           fi
 
           # Flagga se Ollama ha generato un vero diff
