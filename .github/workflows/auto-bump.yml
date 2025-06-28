@@ -98,6 +98,21 @@ jobs:
           pull-request-number: ${{ steps.create_pr.outputs.pull-request-number }}
           merge-method: squash
 
+      - name: Configure npm authentication
+        run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+
+      - name: Publish package
+        run: |
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          echo "Attempting to publish version $CURRENT_VERSION"
+          if npm view carrot-scan@$CURRENT_VERSION --json >/dev/null 2>&1; then
+            echo "Version $CURRENT_VERSION is already on the registry – skipping publish."
+          else
+            yarn publish --non-interactive
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
   auto-fix:
     runs-on: ubuntu-latest
     steps:
@@ -142,7 +157,8 @@ jobs:
             It fixes lint errors and applies Prettier formatting.
 
 
-  gemini-review:
+
+  deepseek-review:
     needs: bump-patch
     runs-on: ubuntu-latest
     steps:
@@ -152,93 +168,48 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GH_PAT }}
 
+      - name: Capture diff since last commit
+        run: git diff HEAD~1 HEAD > diff.patch
 
-      - name: Install Gemini CLI
+      - name: Install Ollama CLI
         run: |
-          npm install -g @google/gemini-cli
-          gemini --version
+          curl -fsSL https://ollama.com/download/Ollama -o ollama
+          chmod +x ollama
+          sudo mv ollama /usr/local/bin
+          ollama --version
 
-      - name: Gemini auto‑improve (diff + apply)
-        id: gpatch
-        env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      - name: Ask Deepseek to suggest an improvement patch
+        id: opatch
         run: |
-          # Generate a unified diff that touches code or docs.
-          # -a = include all project files
-          # --yolo = auto‑accept actions (no interactive prompts)
-          gemini -a --yolo -m gemini-2.5-pro \
-            -p "As carrot‑scan maintainer, create SMALL valuable fixes, minor refactors or doc improvements. Output ONLY a unified diff (git apply format)." \
-            > gemini_suggest.patch || true
-
-          # Flag whether we actually got a diff
-          if grep -q "^diff --git" gemini_suggest.patch; then
-            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+          cat diff.patch | ollama run deepseek-r1:1.5b > deepseek_suggest.patch || true
+          if grep -q "^diff --git" deepseek_suggest.patch; then
+            echo "has_diff=true" >> "$GITHUB_OUTPUT"
           else
-            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+            echo "has_diff=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Gemini project analysis (English)
-        env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        run: |
-          gemini --all_files -m gemini-2.5-pro \
-            -p "You are a documentation bot. Provide a concise (max 200 words) English description of this repository's purpose, architecture, and key modules. Output plain markdown." \
-            > analysis.md
-          echo '### Gemini Project Analysis' >> "$GITHUB_STEP_SUMMARY"
-          cat analysis.md >> "$GITHUB_STEP_SUMMARY"
-
       - name: Apply patch and push branch
-        if: ${{ steps.gpatch.outputs.has_changes == 'true' }}
+        if: ${{ steps.opatch.outputs.has_diff == 'true' }}
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
         run: |
-          git config user.name "gemini-bot"
-          git config user.email "gemini-bot@users.noreply.github.com"
-          git apply gemini_suggest.patch
+          git config user.name "deepseek-bot"
+          git config user.email "deepseek-bot@users.noreply.github.com"
+          git apply deepseek_suggest.patch
           git add -A
-          git commit -m "chore(gemini): automated improvements"
-          BRANCH="gemini-improve-${{ github.run_id }}"
+          git commit -m "chore(deepseek): automated improvements"
+          BRANCH="deepseek-improve-${{ github.run_id }}"
           git switch -c "$BRANCH"
           git push -u origin "$BRANCH"
 
-      - name: Open PR with Gemini improvements
-        if: ${{ steps.gpatch.outputs.has_changes == 'true' }}
+      - name: Open PR with Deepseek improvements
+        if: ${{ steps.opatch.outputs.has_diff == 'true' }}
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GH_PAT }}
-          branch: gemini-improve-${{ github.run_id }}
-          title: "🤖 Gemini automated improvements"
+          branch: deepseek-improve-${{ github.run_id }}
+          title: "🤖 Deepseek automated improvements"
           body: |
-            This PR was generated automatically by Gemini CLI.
-            It contains minor fixes/features/documentation updates aimed at improving user experience and boosting npm downloads.
-          labels: ai, gemini
-
-
-  publish-package:
-    needs: [gemini-review]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-
-      - name: Configure npm authentication
-        run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
-
-      - name: Yarn publish
-        run: |
-          CURRENT_VERSION=$(node -p "require('./package.json').version")
-          if npm view carrot-scan@$CURRENT_VERSION --json >/dev/null 2>&1; then
-            echo "Version $CURRENT_VERSION already exists – skipping publish."
-          else
-            yarn publish --non-interactive
-          fi
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+            This PR was generated automatically by the Deepseek model.
+            It contains minor fixes, features, or documentation updates aimed at improving user experience and boosting npm downloads.
+          labels: ai, deepseek
