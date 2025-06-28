@@ -87,6 +87,13 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
         run: |
+          # Verifica che la patch sia applicabile in modo pulito
+          if ! git apply --check ollama.patch ; then
+            echo "❌ Patch non applicabile in modo pulito, salto creazione branch/PR."
+            exit 0    # termina lo step con successo così il job rimane verde
+          fi
+
+          # Applica la patch e crea un branch
           git apply ollama.patch
           git config user.name "ollama-bot"
           git config user.email "ollama-bot@users.noreply.github.com"
