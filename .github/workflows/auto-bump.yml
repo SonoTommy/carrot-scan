@@ -52,6 +52,13 @@ jobs:
           # esegui Prettier o simili, se configurato:
           npm run format -- --write
 
+      - name: Security scan & autofix (Semgrep)
+        uses: returntocorp/semgrep-action@v1
+        with:
+          autofix: true
+        env:
+          SEMGREP_RULES: p/owasp-top-ten
+
       - name: Push changes & create PR
         id: create_pr
         uses: peter-evans/create-pull-request@v5
@@ -130,11 +137,20 @@ jobs:
 
       - run: npm ci
 
-      - name: Format & lint (fix)
-        continue-on-error: true
-        run: |
-          npx prettier . --write
-          npx eslint . --fix || true
+      - name: Lint & Prettier (auto-fix)
+        uses: wearerequired/lint-action@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          auto_fix: true
+          eslint: true
+          prettier: true
+
+      - name: Security scan & autofix (Semgrep)
+        uses: returntocorp/semgrep-action@v1
+        with:
+          autofix: true
+        env:
+          SEMGREP_RULES: p/owasp-top-ten
 
       - name: Commit & push changes
         uses: stefanzweifel/git-auto-commit-action@v6
