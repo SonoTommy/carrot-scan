@@ -48,7 +48,7 @@ jobs:
       # 6. Push bumped version directly to main
       - name: Push bumped version
         run: |
-          git remote set-url origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}"
+          git remote set-url origin "https://x-access-token:${{ secrets.GH_PAT }}@github.com/${{ github.repository }}"
           git push origin main
 
       # 7. Configura autenticazione npm
