@@ -57,12 +57,14 @@ jobs:
           body: 'Version bumped automatically.'
           delete-branch: true
 
-      - name: Merge pull request
+      - name: Auto merge PR
         if: ${{ steps.create_pr.outputs.pull-request-number }}
-        run: |
-          gh pr merge ${{ steps.create_pr.outputs.pull-request-number }} --squash --delete-branch --yes
-        env:
-          GH_TOKEN: ${{ secrets.GH_PAT }}
+        uses: peter-evans/merge-pull-request@v3
+        with:
+          token: ${{ secrets.GH_PAT }}
+          pull-request: ${{ steps.create_pr.outputs.pull-request-number }}
+          merge-method: squash
+          delete-branch: true
 
       # 7. Configura autenticazione npm
       - name: Configure npm auth
