@@ -65,9 +65,9 @@ jobs:
           if [ -f pr_empty ]; then
             echo "⚠️  Nessun diff di partenza: passo a Ollama la lista dei file"
             REPO_FILES=$(git ls-files | head -n 300)   # max 300 file per non esagerare
-            echo "$REPO_FILES" | ollama run deepseek-r1:1.5b -p "$PROMPT" > ollama.patch || true
+            echo "$REPO_FILES" | ollama run deepseek-r1:1.5b "$PROMPT" > ollama.patch || true
           else
-            cat pr.diff | ollama run deepseek-r1:1.5b -p "$PROMPT" > ollama.patch || true
+            cat pr.diff | ollama run deepseek-r1:1.5b "$PROMPT" > ollama.patch || true
           fi
 
           # Flagga se Ollama ha generato un vero diff
