@@ -60,7 +60,7 @@ jobs:
       - name: Ask Ollama to propose a patch
         id: genpatch
         run: |
-          BASE_PROMPT=$'Agisci come maintainer open‑source esperto.\nSuggerisci miglioramenti a codice e documentazione (refactor, bug‑fix, README, commenti).\nRispondi **solo** con un diff unificato applicabile via `git apply`, senza testo extra.\nAssicurati che inizi con `diff --git`.\n\n'
+          BASE_PROMPT=$'Agisci come maintainer open‑source esperto.\nSuggerisci miglioramenti a codice e documentazione (refactor, bug‑fix, README, commenti).\nRispondi **esclusivamente** con un diff unificato valido per `git apply`, senza testo extra, senza markdown, senza spiegazioni.\nIl diff deve iniziare con la riga `diff --git a/`.\n\n'
 
           # Se non abbiamo un diff di partenza, passiamo la lista file
           if [ -f pr_empty ]; then
@@ -73,6 +73,9 @@ jobs:
             FINAL_PROMPT="${BASE_PROMPT}Ecco il diff corrente:\n${DIFF_CONTENT}"
             ollama run deepseek-r1:1.5b "$FINAL_PROMPT" > ollama.patch || true
           fi
+
+          # Ripulisce eventuale testo prima del diff (tiene da prima riga "diff --git" in poi)
+          sed -n '/^diff --git /,$p' ollama.patch > _clean && mv _clean ollama.patch
 
           # Flagga se Ollama ha generato un vero diff
           if grep -q "^diff --git" ollama.patch; then
