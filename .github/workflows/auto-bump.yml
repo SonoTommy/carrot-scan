@@ -90,6 +90,10 @@ jobs:
             git commit -m "chore(release): bump version to ${{ steps.bump_publish.outputs.new_version }}"
             git push origin main
           fi
+      - name: Wait before publish
+        run: |
+          echo "Waiting 5 minutes before publishing"
+          sleep 300
       - name: Publish package
         run: |
           yarn publish --non-interactive
