@@ -161,62 +161,56 @@ jobs:
     needs: bump-patch
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           token: ${{ secrets.GH_PAT }}
 
-      - name: Capture diff
+      - name: Capture diff since last commit
         run: git diff HEAD~1 HEAD > diff.patch
 
-      - name: Generate patch with Gemini CLI Action
-        id: gpatch
-        uses: google-gemini/gemini-cli-action@0.1.2
-        with:
-          github_token: ${{ secrets.GH_PAT }}
-          api_key: ${{ secrets.GEMINI_API_KEY }}
-          model: gemini-2.5-pro
-          input_file: diff.patch
-          output_file: gemini_suggest.patch
-          prompt: |
-            Sei un maintainer OSS: sul diff fornito, restituisci **solo** un patch unificato da applicare con `git apply`, che aggiunga micro‑feature utili, fix o miglioramenti di documentazione al progetto carrot‑scan.
-
-      - name: Check if Gemini produced a diff
-        id: diffcheck
+      - name: Install Gemini CLI
         run: |
+          npm install -g @google/gemini-cli
+          gemini --version
+
+      - name: Ask Gemini to suggest an improvement patch
+        id: gpatch
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          cat diff.patch | gemini -m gemini-2.5-pro \
+            -p "Agisci come maintainer open‑source per il progetto carrot‑scan. Rispondi **solo** con un diff unificato applicabile con 'git apply' che introduca piccoli fix, feature o miglioramenti di documentazione, senza testo aggiuntivo." \
+            > gemini_suggest.patch || true   # non fallire se CLI restituisce errore vuoto
           if grep -q "^diff --git" gemini_suggest.patch; then
             echo "has_diff=true" >> "$GITHUB_OUTPUT"
           else
             echo "has_diff=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Apply patch (if any) and push
-        if: ${{ steps.diffcheck.outputs.has_diff == 'true' }}
+      - name: Apply patch and push branch
+        if: ${{ steps.gpatch.outputs.has_diff == 'true' }}
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
         run: |
           git config user.name "gemini-bot"
           git config user.email "gemini-bot@users.noreply.github.com"
-
           git apply gemini_suggest.patch
           git add -A
-          COMMIT_MSG="chore(gemini): auto improvements after ${GITHUB_SHA::7}"
-          git commit -m "$COMMIT_MSG"
-
+          git commit -m "chore(gemini): automated improvements"
           BRANCH="gemini-improve-${{ github.run_id }}"
           git switch -c "$BRANCH"
           git push -u origin "$BRANCH"
 
       - name: Open PR with Gemini improvements
-        if: ${{ steps.diffcheck.outputs.has_diff == 'true' }}
+        if: ${{ steps.gpatch.outputs.has_diff == 'true' }}
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GH_PAT }}
           branch: gemini-improve-${{ github.run_id }}
-          title: "🤖 Gemini auto‑improvements for ${{ needs.bump-patch.outputs.new-version }}"
-          commit-message: "chore(gemini): apply AI improvements"
+          title: "🤖 Gemini automated improvements"
           body: |
-            This PR was generated automatically by **Gemini CLI**.
-            It applies feature tweaks, code refactorings, or doc updates intended to improve user experience and drive more npm downloads.
+            This PR was generated automatically by Gemini CLI.
+            It contains minor fixes/features/documentation updates aimed at improving user experience and boosting npm downloads.
           labels: ai, gemini
