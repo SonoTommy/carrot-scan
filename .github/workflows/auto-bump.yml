@@ -76,9 +76,11 @@ jobs:
       - name: Bump version for publish
         id: bump_publish
         run: |
-          yarn version --patch --no-git-tag-version
-          VERSION=$(node -p "require('./package.json').version")
-          echo "new_version=$VERSION" >> $GITHUB_OUTPUT
+          LATEST=$(npm view carrot-scan version)
+          echo "Latest npm version: $LATEST"
+          NEXT=$(node -e "const [maj,min,patch]=process.argv[1].split('.').map(Number); console.log([maj,min,patch+1].join('.'))" $LATEST)
+          yarn version --new-version $NEXT --no-git-tag-version
+          echo "new_version=$NEXT" >> $GITHUB_OUTPUT
       - name: Commit version bump
         run: |
           git config user.name "github-actions[bot]"
