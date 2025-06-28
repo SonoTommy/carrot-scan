@@ -14,9 +14,7 @@ runs:
     - name: Install Ollama CLI
       shell: bash
       run: |
-        curl -fsSL https://ollama.com/download/Ollama -o ollama
-        chmod +x ollama
-        sudo mv ollama /usr/local/bin
+        curl -fsSL https://ollama.com/install.sh | sh
         ollama --version
 
     - name: Generate review with Ollama
