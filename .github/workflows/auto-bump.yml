@@ -167,15 +167,6 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GH_PAT }}
 
-      - name: Install Gemini CLI
-        run: |
-          # Try official install script (repo recently renamed)
-          set -e
-          curl -fsSL https://raw.githubusercontent.com/google-gemini/gemini/main/install.sh | bash || {
-            echo "Fallback: install via npm."
-            npm install -g @google/gemini-cli
-          }
-          gemini --version
 
       - name: Generate patch with Gemini
         id: gpatch
@@ -186,7 +177,7 @@ jobs:
           git diff HEAD~1 HEAD > diff.patch
           
           # Ask Gemini to produce an IMPROVEMENT patch (unified diff only)
-          gemini chat -m gemini-pro \
+          npx -y @google/gemini-cli chat -m gemini-pro \
             -p "Agisci come un maintainer OSS: migliora il pacchetto carrot‑scan aggiungendo piccole feature utili, fix e documentazione. Rispondi **solo** con un diff unificato applicabile con 'git apply', senza testo extra." \
             -i diff.patch \
             > gemini_suggest.patch
