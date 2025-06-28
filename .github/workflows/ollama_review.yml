@@ -88,7 +88,7 @@ jobs:
             cat ollama.patch
           fi
 
-      # 6. Applica la patch e pusha un branch
+      # 6. Apply patch & push branch
       - name: Apply patch & push branch
         id: applypatch
         if: steps.genpatch.outputs.has_patch == 'true'
@@ -119,7 +119,7 @@ jobs:
             else
               echo "❌ Patch non applicabile né con git apply né con patch; salto branch/PR."
               echo "created_branch=false" >> "$GITHUB_OUTPUT"
-              exit 0
+              exit 1
             fi
           fi
 
@@ -134,7 +134,7 @@ jobs:
           git switch -c "$BRANCH"
           git push -u origin "$BRANCH"
 
-      # 7. Crea la pull-request con i miglioramenti
+      # 7. Open PR with Ollama improvements
       - name: Open PR with Ollama improvements
         if: steps.applypatch.outputs.created_branch == 'true'
         uses: peter-evans/create-pull-request@v6
