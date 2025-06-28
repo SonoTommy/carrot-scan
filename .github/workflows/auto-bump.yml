@@ -60,12 +60,10 @@ jobs:
 
       - name: Merge pull request
         if: ${{ steps.create_pr.outputs.pull-request-number }}
-        uses: peter-evans/merge-pull-request@v3
-        with:
-          token: ${{ secrets.GH_PAT }}
-          pull-request: ${{ steps.create_pr.outputs.pull-request-number }}
-          merge-method: squash
-          delete-branch: true
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          gh pr merge ${{ steps.create_pr.outputs.pull-request-number }} --squash --delete-branch --repo ${{ github.repository }}
 
       - name: Checkout main branch
         uses: actions/checkout@v3
