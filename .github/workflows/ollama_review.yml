@@ -41,14 +41,12 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          # Se il workflow nasce da una pull-request → usa gh pr diff
-          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
-            echo "🔎 Gathering diff for PR #${GITHUB_REF##*/}"
-            gh pr diff "${GITHUB_REF##*/}" > pr.diff
-
-          # Se parte da workflow_dispatch → diff fra HEAD e origin/main
+          # Prova a prendere il diff dalla pull‑request se esiste
+          echo "🔎 Attempting gh pr diff for ref ${GITHUB_REF##*/}"
+          if gh pr diff "${GITHUB_REF##*/}" > pr.diff 2>/dev/null; then
+            echo "✅ PR diff collected"
           else
-            echo "🔎 No PR context; diff HEAD vs origin/main"
+            echo "ℹ️  No pull‑request found for branch ${GITHUB_REF##*/}; falling back to git diff against origin/main"
             git fetch origin main
             git diff origin/main...HEAD > pr.diff
           fi
