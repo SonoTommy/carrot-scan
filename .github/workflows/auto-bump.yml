@@ -77,7 +77,8 @@ jobs:
         id: bump_publish
         run: |
           yarn version --patch --no-git-tag-version
-          echo "new_version=$(node -p \"require('./package.json').version\")" >> $GITHUB_OUTPUT
+          VERSION=$(node -p "require('./package.json').version")
+          echo "new_version=$VERSION" >> $GITHUB_OUTPUT
       - name: Commit version bump
         run: |
           git config user.name "github-actions[bot]"
