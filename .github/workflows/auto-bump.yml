@@ -155,3 +155,36 @@ jobs:
           body: |
             This PR is generated automatically every 10 minutes.
             It fixes lint errors and applies Prettier formatting.
+
+
+  gemini-review:
+    needs: bump-patch
+    runs-on: ubuntu-latest
+    if: ${{ needs.bump-patch.outputs.new-version != '' }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Install Gemini CLI
+        run: |
+          curl -L https://raw.githubusercontent.com/google-gemini/gemini-cli/main/install.sh | bash
+          gemini --version
+
+      - name: Gemini AI review of latest diff
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          # Capture diff of the commit that bumped the version
+          git diff HEAD~1 HEAD > diff.patch
+
+          # Ask Gemini to review the patch
+          gemini chat -m gemini-pro -i diff.patch \
+            -p "Sei un code‑reviewer per il progetto carrot‑scan. Fornisci un feedback conciso in italiano, evidenziando bug, refactor possibili e problemi di sicurezza." \
+            > review.md
+
+          # Attach the review to the GitHub Actions summary
+          echo '### Gemini AI Review' >> "$GITHUB_STEP_SUMMARY"
+          cat review.md >> "$GITHUB_STEP_SUMMARY"
