@@ -173,18 +173,49 @@ jobs:
           curl -L https://raw.githubusercontent.com/google-gemini/gemini-cli/main/install.sh | bash
           gemini --version
 
-      - name: Gemini AI review of latest diff
+      - name: Generate patch with Gemini
+        id: gpatch
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           # Capture diff of the commit that bumped the version
           git diff HEAD~1 HEAD > diff.patch
+          
+          # Ask Gemini to produce an IMPROVEMENT patch (unified diff only)
+          gemini chat -m gemini-pro \
+            -p "Agisci come un maintainer OSS: migliora il pacchetto carrot‑scan aggiungendo piccole feature utili, fix e documentazione. Rispondi **solo** con un diff unificato applicabile con 'git apply', senza testo extra." \
+            -i diff.patch \
+            > gemini_suggest.patch
+          
+          # Indica se il patch contiene righe diff
+          echo "HAS_DIFF=$(grep -E '^diff --git' -q gemini_suggest.patch && echo true || echo false)" >> $GITHUB_OUTPUT
 
-          # Ask Gemini to review the patch
-          gemini chat -m gemini-pro -i diff.patch \
-            -p "Sei un code‑reviewer per il progetto carrot‑scan. Fornisci un feedback conciso in italiano, evidenziando bug, refactor possibili e problemi di sicurezza." \
-            > review.md
+      - name: Apply patch (if any) and push
+        if: ${{ steps.gpatch.outputs.HAS_DIFF == 'true' }}
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          git config user.name "gemini-bot"
+          git config user.email "gemini-bot@users.noreply.github.com"
 
-          # Attach the review to the GitHub Actions summary
-          echo '### Gemini AI Review' >> "$GITHUB_STEP_SUMMARY"
-          cat review.md >> "$GITHUB_STEP_SUMMARY"
+          git apply gemini_suggest.patch
+          git add -A
+          COMMIT_MSG="chore(gemini): auto improvements after ${GITHUB_SHA::7}"
+          git commit -m "$COMMIT_MSG"
+
+          BRANCH="gemini-improve-${{ needs.bump-patch.outputs.new-version }}"
+          git switch -c "$BRANCH"
+          git push -u origin "$BRANCH"
+
+      - name: Open PR with Gemini improvements
+        if: ${{ steps.gpatch.outputs.HAS_DIFF == 'true' }}
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GH_PAT }}
+          branch: ${{ steps.gpatch.outputs.HAS_DIFF == 'true' && 'gemini-improve-' || '' }}${{ needs.bump-patch.outputs.new-version }}
+          title: "🤖 Gemini auto‑improvements for ${{ needs.bump-patch.outputs.new-version }}"
+          commit-message: "chore(gemini): apply AI improvements"
+          body: |
+            This PR was generated automatically by **Gemini CLI**.
+            It applies feature tweaks, code refactorings, or doc updates intended to improve user experience and drive more npm downloads.
+          labels: ai, gemini
