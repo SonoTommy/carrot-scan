@@ -98,7 +98,7 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
      #test
-     # - name: Wait after publish
-     #   run: |
-     #     echo "Waiting 5 minutes before releasing concurrency lock"
-     #     sleep 300
+      - name: Wait after publish
+        run: |
+          echo "Waiting 5 minutes before releasing concurrency lock"
+          sleep 300
