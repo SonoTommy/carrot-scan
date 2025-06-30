@@ -46,6 +46,7 @@ jobs:
         subprocess.run(["git", "apply", "daily.patch"], check=True)
         EOF
 
+
     # 6) committa e pusha se ci sono cambiamenti
     - name: Commit & push
       run: |
