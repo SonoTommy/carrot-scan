@@ -61,6 +61,7 @@ jobs:
       - name: Create AI PR
         uses: peter-evans/create-pull-request@v5
         with:
+          token: ${{ secrets.GH_PAT }}
           branch: ai/auto-enhancements
           commit-message: "🤖 AI: refactoring e test automatici"
           title: "AI-driven enhancements: code cleanup & tests"
