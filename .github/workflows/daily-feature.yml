@@ -1,0 +1,40 @@
+name: Daily Code Enhancement
+
+on:
+  schedule:
+    # tutti i giorni a mezzanotte UTC
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  add-feature:
+    runs-on: ubuntu-latest
+    steps:
+      # 1) Fai il checkout del codice
+      - uses: actions/checkout@v3
+
+      # 2) (Opzionale) setup di Python, Node o qualunque tool serva
+      - name: Setup Python 3.x
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      # 3) Installa eventuali librerie (es. openai)
+      - name: Install dependencies
+        run: pip install openai
+
+      # 4) Esegui uno script che “genera” il feature code
+      - name: Generate feature patch
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          python scripts/generate_feature.py
+
+      # 5) Commit & Push
+      - name: Commit and Push changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git diff --quiet || git commit -m "feat: daily code enhancement"
+          git push
