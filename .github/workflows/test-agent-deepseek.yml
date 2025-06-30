@@ -1,4 +1,4 @@
-name: Ollama  powerful
+name: Ollama  powerful test agent
 'on':
   workflow_dispatch:
 jobs:
