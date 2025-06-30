@@ -35,7 +35,7 @@ jobs:
       - name: Identify target files
         id: file_list
         run: |
-          echo "FILES=$(git ls-files 'src/**/*.js' 'src/**/*.ts')" >> $GITHUB_ENV
+          echo "FILES=$(git ls-files '**/*.js' '**/*.ts')" >> $GITHUB_ENV
 
       - name: Authenticate GitHub CLI
         run: |
