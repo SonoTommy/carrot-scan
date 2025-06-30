@@ -1,0 +1,68 @@
+# .github/workflows/ai-maintainer.yml
+name: "AI Maintainer"
+
+on:
+  schedule:
+    # Ogni domenica alle 03:00 UTC (05:00 Europe/Rome)
+    - cron: '0 3 * * 0'
+  workflow_dispatch:
+
+jobs:
+  ai-enhance:
+    name: "AI-driven Refactor & Test Generator"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: |
+          npm install
+
+      - name: Install OpenAI CLI
+        run: |
+          npm install -g openai-cli
+
+      - name: Identify target files
+        id: file_list
+        run: |
+          echo "FILES=$(git ls-files 'src/**/*.js' 'src/**/*.ts')" >> $GITHUB_ENV
+
+      - name: AI Refactor & Test Generation
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          for file in $FILES; do
+            openai api files.upload -p "Refattorizza e migliora questo file mantenendo funzionalità e stile." -i "$file" -o "/tmp/ai_$file"
+            openai api completions.create -m gpt-4o-mini \
+              -p "Elabora il refactoring e aggiunge test unitari per il file indicato. Restituisci solo il contenuto codificato." \
+              --input "/tmp/ai_$file" > "$file"
+          done
+
+      - name: Run Lint and Tests
+        run: |
+          npm run lint
+          npm test
+
+      - name: Create AI PR
+        uses: peter-evans/create-pull-request@v5
+        with:
+          branch: ai/auto-enhancements
+          commit-message: "🤖 AI: refactoring e test automatici"
+          title: "AI-driven enhancements: code cleanup & tests"
+          body: |
+            Questo PR è generato automaticamente da un workflow AI che:
+            - Refattorizza il codice
+            - Aggiunge test unitari
+            - Rispetta le regole di lint e format
+
+      - name: Add label 'ai-proposed'
+        uses: actions-ecosystem/action-add-labels@v1
+        with:
+          labels: ai-proposed
