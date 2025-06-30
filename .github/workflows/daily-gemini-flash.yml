@@ -25,7 +25,14 @@ jobs:
       - name: Install dependencies
         run: pip install gpt4all unidiff
 
-      # 4) Generate and apply patch via local GPT4All client
+      # 4) Download GPT4All model
+      - name: Download GPT4All model
+        run: |
+          mkdir -p models
+          curl -L https://huggingface.co/nomic-ai/gpt4all-lora/resolve/main/gpt4all-lora-quantized.bin \
+            -o models/gpt4all-lora-quantized.bin
+
+      # 5) Generate and apply patch via local GPT4All client
       - name: Generate and apply patch via local GPT4All client
         run: |
           python - << 'EOF'
@@ -41,7 +48,7 @@ jobs:
           subprocess.run(["git", "apply", "daily.patch"], check=True)
           EOF
 
-      # 5) committa e pusha se ci sono cambiamenti
+      # 6) committa e pusha se ci sono cambiamenti
       - name: Commit & push
         run: |
           git config user.name "github-actions[bot]"
