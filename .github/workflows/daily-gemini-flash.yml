@@ -31,8 +31,8 @@ jobs:
           python - << 'EOF'
           import subprocess
           from gpt4all import GPT4All
-          # download and load model automatically
-          model = GPT4All(model_name="gpt4all-lora-quantized", allow_download=True)
+          # load the model from a local file without downloading
+          model = GPT4All(model_path="models/gpt4all-lora-quantized.bin", allow_download=False)
           prompt = "Applica una modifica al codice del progetto per introdurre un piccolo miglioramento/feature. Restituisci un unified diff."
           resp = model.generate(prompt)
           patch = resp.strip()
