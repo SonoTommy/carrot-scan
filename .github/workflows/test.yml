@@ -13,4 +13,6 @@ jobs:
         ollama pull phi3:mini
     - name: Call ollama API
       run: |
-        curl -d '{"model": "phi3:mini", "stream": false, "prompt":"Whatever I say, asnwer with Yes"}' http://localhost:11434/api/generate
+          curl -s --show-error \
+          -d '{"model":"phi3:mini","stream":false,"prompt":"Whatever I say, answer with Yes"}' \
+          http://localhost:11434/api/generate
