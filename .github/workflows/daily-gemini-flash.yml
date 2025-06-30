@@ -38,7 +38,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         # --model accetta “gemini-2.0-flash” per forzare l’uso del nuovo modello
-        copilot patch . \
+        github-copilot-cli patch . \
           --prompt-file daily-prompt.txt \
           --model gemini-2.0-flash \
           --apply
