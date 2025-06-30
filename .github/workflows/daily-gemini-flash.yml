@@ -16,7 +16,7 @@ jobs:
 
     # 2) install GitHub Copilot CLI extension
     - name: Install Copilot CLI extension
-      run: gh extension install github/copilot-cli --yes
+      run: gh extension install github/copilot-cli
 
     # 3) Generate and apply patch via Copilot CLI
     - name: Generate and apply patch via Copilot CLI
