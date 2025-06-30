@@ -30,7 +30,7 @@ jobs:
 
       - name: Install OpenAI CLI
         run: |
-          npm install -g openai-cli
+          npm install -g @openai/cli
 
       - name: Identify target files
         id: file_list
