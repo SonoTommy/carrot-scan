@@ -14,5 +14,5 @@ jobs:
     - name: Call ollama API
       run: |
           curl -s --show-error \
-          -d '{"model":"phi3:mini","stream":false,"prompt":"What is 2 + 2?"}' \
+          -d '{"model":"deepseek-r1:latest","stream":false,"prompt":"What is 2 + 2?"}' \
           http://localhost:11434/api/generate
