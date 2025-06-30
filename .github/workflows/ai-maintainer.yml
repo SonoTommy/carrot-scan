@@ -37,6 +37,14 @@ jobs:
         run: |
           echo "FILES=$(git ls-files 'src/**/*.js' 'src/**/*.ts')" >> $GITHUB_ENV
 
+      - name: Authenticate GitHub CLI
+        run: |
+          echo "${{ secrets.GH_PAT }}" | gh auth login --with-token
+
+      - name: Install GitHub Copilot CLI Extension
+        run: |
+          gh extension install github/gh-copilot
+
       - name: AI Refactor & Test Generation
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -48,14 +56,10 @@ jobs:
               --input "/tmp/ai_$file" > "$file"
           done
 
-      - name: Setup GitHub Copilot CLI
-        run: |
-          npm install -g @githubnext/github-copilot-cli
-
       - name: Copilot Code & Docs Improvements
         run: |
           for file in $FILES; do
-            copilot code --file "$file" --patch --in "Migliora il codice e aggiorna la documentazione mantenendo lo stile esistente."
+            gh copilot code --file "$file" --patch --in "Migliora il codice e aggiorna la documentazione mantenendo lo stile esistente."
           done
 
       - name: Create AI PR
