@@ -14,8 +14,8 @@
     "lint:fix": "eslint \"**/*.{js,ts}\" --config .eslintrc.cjs --fix",
     "format": "prettier --write \"**/*.{js,ts,json,md}\"",
     "start-api": "node ./src/api.js",
-    "postinstall": "node ./scripts/postinstall.js"
-    
+    "postinstall": "node ./postinstall.js"
+
   },
   "exports": {
     ".": {
