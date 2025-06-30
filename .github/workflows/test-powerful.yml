@@ -10,7 +10,7 @@ jobs:
     - name: Run ollama
       run: |
         ollama serve &
-        ollama pull phi3:mini
+        ollama pull deepseek-r1:latest
     - name: Call ollama API
       run: |
           curl -s --show-error \
