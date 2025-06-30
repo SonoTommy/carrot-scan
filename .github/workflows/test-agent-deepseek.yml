@@ -1,0 +1,51 @@
+name: Ollama  powerful
+'on':
+  workflow_dispatch:
+jobs:
+  summarize:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Install ollama
+      run: curl -fsSL https://ollama.com/install.sh | sh
+    - name: Run ollama
+      run: |
+        ollama serve &
+        ollama pull deepseek-r1:latest
+    - name: Call ollama API
+      run: |
+          curl -s --show-error \
+          -d '{"model":"deepseek-r1:latest","stream":false,"prompt":"What is 2 + 2?"}' \
+          http://localhost:11434/api/generate
+
+  analysis:
+    runs-on: ubuntu-latest
+    needs: summarize
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+    - name: Install ollama
+      run: curl -fsSL https://ollama.com/install.sh | sh
+    - name: Create docs directory
+      run: mkdir -p docs
+    - name: List source files
+      run: find . -type f \( -name "*.py" -o -name "*.js" -o -name "*.ts" -o -name "*.go" -o -name "*.java" \) > file_list.txt
+    - name: Analyze repository with Deepseek
+      run: |
+        > deepseek_report.md
+        while IFS= read -r file; do
+          echo "## Analysis of $file" >> deepseek_report.md
+          RESPONSE=$(curl -s --show-error \
+            -d "{\"model\":\"deepseek-r1:latest\",\"stream\":false,\"prompt\":\"Please analyze the code in $file and suggest improvements and document its functionality.\"}" \
+            http://localhost:11434/api/generate)
+          echo "$RESPONSE" >> deepseek_report.md
+          echo "" >> deepseek_report.md
+        done < file_list.txt
+    - name: Move report to docs
+      run: mv deepseek_report.md docs/analysis.md
+    - name: Commit and push Deepseek analysis
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git add docs/analysis.md
+        git commit -m "Add deepseek repository analysis"
+        git push
