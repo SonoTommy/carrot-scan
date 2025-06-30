@@ -1,4 +1,3 @@
-# .github/workflows/ai-maintainer.yml
 name: "AI Maintainer"
 
 on:
