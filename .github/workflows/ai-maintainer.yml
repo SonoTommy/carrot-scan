@@ -44,10 +44,15 @@ jobs:
               --input "/tmp/ai_$file" > "$file"
           done
 
-      - name: Run Lint and Tests
+      - name: Setup GitHub Copilot CLI
         run: |
-          npm run lint
-          npm test
+          npm install -g @githubnext/github-copilot-cli
+
+      - name: Copilot Code & Docs Improvements
+        run: |
+          for file in $FILES; do
+            copilot code --file "$file" --patch --in "Migliora il codice e aggiorna la documentazione mantenendo lo stile esistente."
+          done
 
       - name: Create AI PR
         uses: peter-evans/create-pull-request@v5
