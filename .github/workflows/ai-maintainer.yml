@@ -59,6 +59,7 @@ jobs:
           done
 
       - name: Create AI PR
+        id: create_pr
         uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ secrets.GH_PAT }}
@@ -75,3 +76,5 @@ jobs:
         uses: actions-ecosystem/action-add-labels@v1
         with:
           labels: ai-proposed
+          github_token: ${{ secrets.GH_PAT }}
+          issue_number: ${{ steps.create_pr.outputs.pull-request-number }}
