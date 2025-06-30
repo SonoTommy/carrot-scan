@@ -1,5 +1,9 @@
 name: "AI Maintainer"
 
+permissions:
+  contents: write
+  pull-requests: write
+
 on:
   schedule:
     # Ogni domenica alle 03:00 UTC (05:00 Europe/Rome)
