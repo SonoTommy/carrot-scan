@@ -21,7 +21,7 @@ jobs:
     # 3) Generate and apply patch via Copilot CLI
     - name: Generate and apply patch via Copilot CLI
       env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_TOKEN: ${{ secrets.GH_PAT }}
       run: |
         gh copilot patch . --model gemini-2.0-flash --apply --yes
 
