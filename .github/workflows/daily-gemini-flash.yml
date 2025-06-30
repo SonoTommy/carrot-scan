@@ -18,12 +18,14 @@ jobs:
     - name: Install Copilot CLI extension
       env:
         GH_TOKEN: ${{ secrets.GH_PAT }}
+        GITHUB_TOKEN: ${{ secrets.GH_PAT }}
       run: gh extension install github/copilot-cli
 
     # 3) Generate and apply patch via Copilot CLI
     - name: Generate and apply patch via Copilot CLI
       env:
         GH_TOKEN: ${{ secrets.GH_PAT }}
+        GITHUB_TOKEN: ${{ secrets.GH_PAT }}
       run: |
         gh copilot patch . --model gemini-2.0-flash --apply --yes
 
