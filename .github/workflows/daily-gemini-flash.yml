@@ -1,0 +1,57 @@
+name: Daily Gemini 2.0 Flash Enhancement
+
+on:
+  schedule:
+    # ogni giorno a mezzanotte UTC
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  daily-enhance:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1) checkout del repo
+    - uses: actions/checkout@v3
+
+    # 2) setup di Node (il Copilot CLI richiede Node.js)
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '16'
+
+    # 3) installa il Copilot CLI
+    - name: Install GitHub Copilot CLI
+      run: npm install -g @githubnext/github-copilot-cli
+
+    # 4) prepara il prompt su disco
+    - name: Write prompt
+      run: |
+        cat << 'EOF' > daily-prompt.txt
+        Applica una modifica al codice del progetto per introdurre un piccolo miglioramento/feature.
+        Sii conciso, implementa un esempio concreto, e produci soltanto il diff da applicare.
+        EOF
+
+    # 5) genera e applica la patch con Gemini 2.0 Flash
+    - name: Generate & apply patch via Copilot
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        # --model accetta “gemini-2.0-flash” per forzare l’uso del nuovo modello
+        copilot patch . \
+          --prompt-file daily-prompt.txt \
+          --model gemini-2.0-flash \
+          --apply
+
+    # 6) committa e pusha se ci sono cambiamenti
+    - name: Commit & push
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git add .
+        if ! git diff --cached --exit-code; then
+          git commit -m "feat: daily enhancement via Gemini 2.0 Flash"
+          git push
+        else
+          echo "Nessuna modifica da committare."
+        fi
