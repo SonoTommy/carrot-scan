@@ -77,4 +77,4 @@ jobs:
         with:
           labels: ai-proposed
           github_token: ${{ secrets.GH_PAT }}
-          issue_number: ${{ steps.create_pr.outputs.pull-request-number }}
+          number: ${{ steps.create_pr.outputs.pull-request-number }}
