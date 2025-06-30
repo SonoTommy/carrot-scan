@@ -16,14 +16,22 @@ jobs:
     # 1) checkout del repo
     - uses: actions/checkout@v3
 
-    # 2) install GitHub Copilot CLI extension
-    - name: Install Copilot CLI extension
-      run: gh extension install github/gh-copilot --force
+    # 2) Setup Node.js >=22 for Open Codex CLI
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '22'
 
-    # 3) Generate and apply patch via Copilot CLI
-    - name: Generate and apply patch via Copilot CLI
+    # 3) Install Open Codex CLI
+    - name: Install Open Codex CLI
+      run: npm install -g open-codex
+
+    # 4) Generate and apply patch via Open Codex CLI
+    - name: Generate and apply patch via Open Codex CLI
+      env:
+        GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       run: |
-        gh copilot patch . --model gemini-2.0-flash --apply --yes
+        open-codex --provider gemini --model gemini-2.0-flash -a auto-edit -q "Applica una modifica al codice del progetto per introdurre un piccolo miglioramento/feature."
 
     # 6) committa e pusha se ci sono cambiamenti
     - name: Commit & push
