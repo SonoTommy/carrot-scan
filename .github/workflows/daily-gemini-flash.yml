@@ -14,34 +14,22 @@ jobs:
     # 1) checkout del repo
     - uses: actions/checkout@v3
 
-    # 2) setup di Node (il Copilot CLI richiede Node.js)
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
+    # 2) setup di Python
+    - name: Setup Python
+      uses: actions/setup-python@v4
       with:
-        node-version: '16'
+        python-version: '3.x'
 
-    # 3) installa il Copilot CLI
-    - name: Install GitHub Copilot CLI
-      run: npm install -g @githubnext/github-copilot-cli
+    # 3) installa dipendenze Python
+    - name: Install dependencies
+      run: pip install openai
 
-    # 4) prepara il prompt su disco
-    - name: Write prompt
-      run: |
-        cat << 'EOF' > daily-prompt.txt
-        Applica una modifica al codice del progetto per introdurre un piccolo miglioramento/feature.
-        Sii conciso, implementa un esempio concreto, e produci soltanto il diff da applicare.
-        EOF
-
-    # 5) genera e applica la patch con Gemini 2.0 Flash
-    - name: Generate & apply patch via Copilot
+    # 4) genera e applica la patch con script Python
+    - name: Generate and apply patch with Python
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       run: |
-        # --model accetta “gemini-2.0-flash” per forzare l’uso del nuovo modello
-        github-copilot-cli patch . \
-          --prompt-file daily-prompt.txt \
-          --model gemini-2.0-flash \
-          --apply
+        python scripts/generate_feature.py
 
     # 6) committa e pusha se ci sono cambiamenti
     - name: Commit & push
