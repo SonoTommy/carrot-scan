@@ -16,22 +16,34 @@ jobs:
     # 1) checkout del repo
     - uses: actions/checkout@v3
 
-    # 2) Setup Node.js >=22 for Open Codex CLI
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
+    # 2) Setup Python
+    - name: Setup Python
+      uses: actions/setup-python@v4
       with:
-        node-version: '22'
+        python-version: '3.x'
 
-    # 3) Install Open Codex CLI
-    - name: Install Open Codex CLI
-      run: npm install -g open-codex
+    # 3) Install dependencies
+    - name: Install dependencies
+      run: pip install openai
 
-    # 4) Generate and apply patch via Open Codex CLI
-    - name: Generate and apply patch via Open Codex CLI
+    # 4) Generate and apply patch via Gemini 2.0 Flash
+    - name: Generate and apply patch via Gemini 2.0 Flash
       env:
-        GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        OPENAI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       run: |
-        open-codex --provider gemini --model gemini-2.0-flash -a auto-edit -q "Applica una modifica al codice del progetto per introdurre un piccolo miglioramento/feature."
+        python - << 'EOF'
+        import os, subprocess, openai
+        openai.api_key = os.getenv("OPENAI_API_KEY")
+        prompt = "Applica una modifica al codice del progetto per introdurre un piccolo miglioramento/feature. Restituisci un unified diff."
+        resp = openai.ChatCompletion.create(
+          model="gemini-2.0-flash",
+          messages=[{"role":"user","content":prompt}],
+          temperature=0.7
+        )
+        patch = resp.choices[0].message.content
+        with open("daily.patch", "w") as f: f.write(patch)
+        subprocess.run(["git","apply","daily.patch"], check=True)
+        EOF
 
     # 6) committa e pusha se ci sono cambiamenti
     - name: Commit & push
