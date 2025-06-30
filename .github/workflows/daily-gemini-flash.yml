@@ -30,7 +30,7 @@ jobs:
     - name: Download LLM model
       run: |
         mkdir -p models
-        curl -L https://models.nomic.ai/GPT4All/ggml/gpt4all-lora-quantized.bin -o models/gpt4all-lora-quantized.bin
+        curl -L https://huggingface.co/nomic-ai/gpt4all-lora/resolve/main/gpt4all-lora-quantized.bin -o models/gpt4all-lora-quantized.bin
 
     # 5) Generate and apply patch via local LLM
     - name: Generate and apply patch via local LLM
