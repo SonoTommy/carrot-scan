@@ -1,25 +1,23 @@
 name: Ollama  powerful test agent
 'on':
   workflow_dispatch:
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  discussions: write
+  actions: write
+  deployments: write
+  checks: write
+  id-token: write
+  pages: write
+  statuses: write
+  packages: write
+  repository-projects: write
+  security-events: write
 jobs:
-  summarize:
-    runs-on: ubuntu-latest
-    steps:
-    - name: Install ollama
-      run: curl -fsSL https://ollama.com/install.sh | sh
-    - name: Run ollama
-      run: |
-        ollama serve &
-        ollama pull deepseek-r1:latest
-    - name: Call ollama API
-      run: |
-          curl -s --show-error \
-          -d '{"model":"deepseek-r1:latest","stream":false,"prompt":"What is 2 + 2?"}' \
-          http://localhost:11434/api/generate
-
   analysis:
     runs-on: ubuntu-latest
-    needs: summarize
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
@@ -44,8 +42,9 @@ jobs:
       run: mv deepseek_report.md docs/analysis.md
     - name: Commit and push Deepseek analysis
       run: |
+        git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
         git add docs/analysis.md
         git commit -m "Add deepseek repository analysis"
-        git push
+        git push origin HEAD:${{ github.ref }}
