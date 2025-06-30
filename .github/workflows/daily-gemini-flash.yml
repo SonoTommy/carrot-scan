@@ -14,11 +14,16 @@ jobs:
     # 1) checkout del repo
     - uses: actions/checkout@v3
 
+    # 2) authenticate GitHub CLI using PAT
+    - name: Authenticate GH CLI
+      env:
+        GH_TOKEN: ${{ secrets.GH_PAT }}
+      run: echo "$GH_TOKEN" | gh auth login --with-token
+
     # 2) install GitHub Copilot CLI extension
     - name: Install Copilot CLI extension
       env:
         GH_TOKEN: ${{ secrets.GH_PAT }}
-        GITHUB_TOKEN: ${{ secrets.GH_PAT }}
       run: gh extension install github/copilot-cli
 
     # 3) Generate and apply patch via Copilot CLI
