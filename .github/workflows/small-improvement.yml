@@ -15,10 +15,12 @@ jobs:
           fetch-depth: 0
       - name: Get changed files
         id: files
+        if: github.event_name == 'pull_request'
         run: |
           echo "CHANGED_FILES=$(git diff --name-only origin/main...${{ github.event.pull_request.head.sha }})" >> $GITHUB_ENV
       - name: Check for docs or small changes
         id: check
+        if: github.event_name == 'pull_request'
         run: |
           DOCS_CHANGED=false
           SMALL_CHANGE=false
@@ -28,20 +30,20 @@ jobs:
             fi
           done
           # Count total lines changed
-          LINES_CHANGED=$(git diff --shortstat origin/main...${{ github.event.pull_request.head.sha }} | awk '{print $4+$6}')
+          LINES_CHANGED=$(git diff --shortstat origin/main...${{ github.event.pull_request.head.sha }} | awk '{print ($4+$6)}')
           if [[ $LINES_CHANGED -le 20 ]]; then
             SMALL_CHANGE=true
           fi
           echo "docs=$DOCS_CHANGED" >> $GITHUB_OUTPUT
           echo "small=$SMALL_CHANGE" >> $GITHUB_OUTPUT
       - name: Add label for docs
-        if: steps.check.outputs.docs == 'true'
+        if: github.event_name == 'pull_request' && steps.check.outputs.docs == 'true'
         uses: actions-ecosystem/action-add-labels@v1
         with:
           github_token: ${{ secrets.GH_PAT }}
           labels: docs
       - name: Add label for small improvement
-        if: steps.check.outputs.small == 'true'
+        if: github.event_name == 'pull_request' && steps.check.outputs.small == 'true'
         uses: actions-ecosystem/action-add-labels@v1
         with:
           github_token: ${{ secrets.GH_PAT }}
