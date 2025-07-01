@@ -15,14 +15,26 @@ jobs:
         key: ollama-${{ runner.os }}-deepseek-r1
 
     # 2. Install & serve
-    - name: Install Ollama
-      run: curl -fsSL https://ollama.com/install.sh | sh
+    - name: Install Ollama (if missing)
+      run: |
+        if ! command -v ollama >/dev/null 2>&1; then
+          echo "Installing Ollama..."
+          curl -fsSL https://ollama.com/install.sh | sh
+        else
+          echo "Ollama already installed, skipping installation."
+        fi
     - name: Start Ollama
       run: ollama serve &
 
     # 3. Ensure model present (fast if cached)
-    - name: Pull model
-      run: ollama pull deepseek-r1:latest
+    - name: Ensure deepseek model
+      run: |
+        if ! ollama show deepseek-r1:latest >/dev/null 2>&1; then
+          echo "Model not found in cache, pulling..."
+          ollama pull deepseek-r1:latest
+        else
+          echo "Model deepseek-r1:latest already present, skipping pull."
+        fi
 
     # 4. Install jq (needed to parse JSON)
     - name: Install dependencies
@@ -36,13 +48,19 @@ jobs:
         set -e
         CHANGED=0
         # Identify source files you want to iterate on; adjust patterns as needed
-        git ls-files '*.py' '*.js' '*.ts' > file_list.txt
+        # Prefer recently changed files to keep runtime short
+        MAX_FILES=30
+        git diff --name-only -M -C --diff-filter=AMRT $(git rev-parse HEAD~1)..HEAD -- '*.py' '*.js' '*.ts' | head -n ${MAX_FILES} > file_list.txt || true
+        if [ ! -s file_list.txt ]; then
+          echo "No recent changes detected; falling back to first ${MAX_FILES} source files."
+          git ls-files '*.py' '*.js' '*.ts' | head -n ${MAX_FILES} > file_list.txt
+        fi
 
         while IFS= read -r file; do
           echo "Processing $file"
           CODE=$(cat "$file" | sed 's/`/`/g')
           PROMPT="Act as a senior developer.\nGiven the following source file, generate a unified diff patch that adds a small, useful improvement (total added lines between 5 and 40).\nKeep the style consistent with the existing code.\nRespond *only* with the diff."
-          DIFF=$(curl -s -d "{\"model\":\"deepseek-r1:latest\",\"stream\":false,\"options\":{\"num_predict\":512},\"prompt\":\"${PROMPT}\\n\\nFilename: $file\\n\\n\\`\\`\\`\\n$CODE\\n\\`\\`\\`\"}" \
+          DIFF=$(curl -s -d "{\"model\":\"deepseek-r1:latest\",\"stream\":false,\"options\":{\"num_predict\":256},\"prompt\":\"${PROMPT}\\n\\nFilename: $file\\n\\n\\`\\`\\`\\n$CODE\\n\\`\\`\\`\"}" \
           http://localhost:11434/api/generate | jq -r '.response')
 
           # Apply patch if it looks like a diff
