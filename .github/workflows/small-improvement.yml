@@ -3,6 +3,7 @@ name: Small Improvement Labeler
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+  workflow_dispatch:
 
 jobs:
   label-small-improvement:
