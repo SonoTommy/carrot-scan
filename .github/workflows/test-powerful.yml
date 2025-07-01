@@ -49,7 +49,8 @@ jobs:
         CHANGED=0
         # Identify source files you want to iterate on; adjust patterns as needed
         # Prefer recently changed files to keep runtime short
-        MAX_FILES=30
+        # Only one improvement per run
+        MAX_FILES=1
         git diff --name-only -M -C --diff-filter=AMRT $(git rev-parse HEAD~1)..HEAD -- '*.py' '*.js' '*.ts' | head -n ${MAX_FILES} > file_list.txt || true
         if [ ! -s file_list.txt ]; then
           echo "No recent changes detected; falling back to first ${MAX_FILES} source files."
