@@ -13,7 +13,9 @@ jobs:
     - name: Restore Ollama cache
       uses: actions/cache@v4
       with:
-        path: ~/.ollama
+        path: |
+          ~/.ollama
+          /usr/share/ollama
         key: ollama-${{ runner.os }}-deepseek-r1
 
     # 2. Install & serve
@@ -77,14 +79,21 @@ jobs:
             --arg file "$file" \
             --rawfile code "$file" \
             '{model:$model,stream:false,options:{num_predict:256},prompt:($prompt + "\n\nFilename: " + $file + "\n```\n" + $code + "\n```")}')
-          DIFF=$(curl -s -d "$PAYLOAD" http://localhost:11434/api/generate | jq -r '.response')
+          # Call DeepSeek and capture response
+          RAW=$(curl -s -d "$PAYLOAD" http://localhost:11434/api/generate | jq -r '.response')
+          echo "::group::DeepSeek raw response for $file"
+          echo "$RAW"
+          echo "::endgroup::"
 
-          # Apply patch if it looks like a diff
-          if [[ "$DIFF" == diff\ -* ]]; then
+          # Strip any Markdown fences ``` that DeepSeek might add
+          DIFF=$(echo "$RAW" | sed '/^```/d')
+
+          # Apply patch if it starts with a standard git diff header
+          if echo "$DIFF" | grep -qE '^diff --git'; then
             echo "$DIFF" | git apply -
             CHANGED=1
           else
-            echo "No diff returned for $file"
+            echo "No usable diff returned for $file"
           fi
         done < file_list.txt
 
