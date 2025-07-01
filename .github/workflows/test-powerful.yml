@@ -1,18 +1,41 @@
-name: Ollama  powerful
-'on':
-  workflow_dispatch:
+name: Ollama DeepSeek report
+'on': workflow_dispatch
+
 jobs:
-  summarize:
+  analyze:
     runs-on: ubuntu-latest
     steps:
-    - name: Install ollama
+    - uses: actions/checkout@v4
+
+    # 1. Cache modelli
+    - name: Restore Ollama cache
+      uses: actions/cache@v4
+      with:
+        path: ~/.ollama
+        key: ollama-${{ runner.os }}-deepseek-r1
+
+    # 2. Install & serve
+    - name: Install Ollama
       run: curl -fsSL https://ollama.com/install.sh | sh
-    - name: Run ollama
+    - name: Start Ollama
+      run: ollama serve &
+
+    # 3. Ensure model present (fast if cached)
+    - name: Pull model
+      run: ollama pull deepseek-r1:latest
+
+    # 4. Generate report in parallel
+    - name: DeepSeek analysis
       run: |
-        ollama serve &
-        ollama pull deepseek-r1:latest
-    - name: Call ollama API
-      run: |
-          curl -s --show-error \
-          -d '{"model":"deepseek-r1:latest","stream":false,"prompt":"What is 2 + 2?"}' \
-          http://localhost:11434/api/generate
+        rm -f deepseek_report.md
+        parallel -j $(nproc) --bar '
+          file={};
+          {
+            echo "## Analysis of $file";
+            curl -s -d "{\"model\":\"deepseek-r1:latest\",\"stream\":false,\
+            \"options\":{\"num_predict\":256},\
+            \"prompt\":\"Please analyze the code in $file and suggest improvements and document its functionality.\"}" \
+            http://localhost:11434/api/generate
+            echo
+          } >> deepseek_report.md
+        ' :::: file_list.txt
