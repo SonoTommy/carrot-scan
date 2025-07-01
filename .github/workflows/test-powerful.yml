@@ -1,8 +1,8 @@
-name: Ollama DeepSeek report
+name: Ollama DeepSeek auto‑improve
 'on': workflow_dispatch
 
 jobs:
-  analyze:
+  auto_improve:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -24,18 +24,43 @@ jobs:
     - name: Pull model
       run: ollama pull deepseek-r1:latest
 
-    # 4. Generate report in parallel
-    - name: DeepSeek analysis
+    # 4. Install jq (needed to parse JSON)
+    - name: Install dependencies
+      run: sudo apt-get update -y && sudo apt-get install -y jq
+
+    # 5. Auto‑improve source code and push changes
+    - name: DeepSeek auto‑improve
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        rm -f deepseek_report.md
-        parallel -j $(nproc) --bar '
-          file={};
-          {
-            echo "## Analysis of $file";
-            curl -s -d "{\"model\":\"deepseek-r1:latest\",\"stream\":false,\
-            \"options\":{\"num_predict\":256},\
-            \"prompt\":\"Please analyze the code in $file and suggest improvements and document its functionality.\"}" \
-            http://localhost:11434/api/generate
-            echo
-          } >> deepseek_report.md
-        ' :::: file_list.txt
+        set -e
+        CHANGED=0
+        # Identify source files you want to iterate on; adjust patterns as needed
+        git ls-files '*.py' '*.js' '*.ts' > file_list.txt
+
+        while IFS= read -r file; do
+          echo "Processing $file"
+          CODE=$(cat "$file" | sed 's/`/`/g')
+          PROMPT="Act as a senior developer.\nGiven the following source file, generate a unified diff patch that adds a small, useful improvement (total added lines between 5 and 40).\nKeep the style consistent with the existing code.\nRespond *only* with the diff."
+          DIFF=$(curl -s -d "{\"model\":\"deepseek-r1:latest\",\"stream\":false,\"options\":{\"num_predict\":512},\"prompt\":\"${PROMPT}\\n\\nFilename: $file\\n\\n\\`\\`\\`\\n$CODE\\n\\`\\`\\`\"}" \
+          http://localhost:11434/api/generate | jq -r '.response')
+
+          # Apply patch if it looks like a diff
+          if [[ "$DIFF" == diff\ -* ]]; then
+            echo "$DIFF" | git apply -
+            CHANGED=1
+          else
+            echo "No diff returned for $file"
+          fi
+        done < file_list.txt
+
+        if [[ $CHANGED -eq 1 ]]; then
+          echo "Committing changes..."
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "chore: automated small improvements [skip ci]"
+          git push origin HEAD
+        else
+          echo "No changes were made."
+        fi
