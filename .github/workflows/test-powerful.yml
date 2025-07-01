@@ -6,6 +6,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 2
 
     # 1. Cache modelli
     - name: Restore Ollama cache
@@ -24,7 +26,14 @@ jobs:
           echo "Ollama already installed, skipping installation."
         fi
     - name: Start Ollama
-      run: ollama serve &
+      run: |
+        if ss -tln | grep -q ':11434'; then
+          echo "Ollama already running on port 11434"
+        else
+          echo "Starting Ollama..."
+          ollama serve &
+          sleep 5
+        fi
 
     # 3. Ensure model present (fast if cached)
     - name: Ensure deepseek model
@@ -51,7 +60,9 @@ jobs:
         # Prefer recently changed files to keep runtime short
         # Only one improvement per run
         MAX_FILES=1
-        git diff --name-only -M -C --diff-filter=AMRT $(git rev-parse HEAD~1)..HEAD -- '*.py' '*.js' '*.ts' | head -n ${MAX_FILES} > file_list.txt || true
+        if git rev-parse --verify -q HEAD~1 >/dev/null; then
+          git diff --name-only -M -C --diff-filter=AMRT HEAD~1..HEAD -- '*.py' '*.js' '*.ts' | head -n ${MAX_FILES} > file_list.txt || true
+        fi
         if [ ! -s file_list.txt ]; then
           echo "No recent changes detected; falling back to first ${MAX_FILES} source files."
           git ls-files '*.py' '*.js' '*.ts' | head -n ${MAX_FILES} > file_list.txt
@@ -59,10 +70,14 @@ jobs:
 
         while IFS= read -r file; do
           echo "Processing $file"
-          CODE=$(cat "$file" | sed 's/`/`/g')
           PROMPT="Act as a senior developer.\nGiven the following source file, generate a unified diff patch that adds a small, useful improvement (total added lines between 5 and 40).\nKeep the style consistent with the existing code.\nRespond *only* with the diff."
-          DIFF=$(curl -s -d "{\"model\":\"deepseek-r1:latest\",\"stream\":false,\"options\":{\"num_predict\":256},\"prompt\":\"${PROMPT}\\n\\nFilename: $file\\n\\n\\`\\`\\`\\n$CODE\\n\\`\\`\\`\"}" \
-          http://localhost:11434/api/generate | jq -r '.response')
+          PAYLOAD=$(jq -n \
+            --arg model "deepseek-r1:latest" \
+            --arg prompt "$PROMPT" \
+            --arg file "$file" \
+            --rawfile code "$file" \
+            '{model:$model,stream:false,options:{num_predict:256},prompt:($prompt + "\n\nFilename: " + $file + "\n```\n" + $code + "\n```")}')
+          DIFF=$(curl -s -d "$PAYLOAD" http://localhost:11434/api/generate | jq -r '.response')
 
           # Apply patch if it looks like a diff
           if [[ "$DIFF" == diff\ -* ]]; then
