@@ -1,0 +1,22 @@
+name: AI Suggestion on PR
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+  workflow_dispatch:
+    
+
+jobs:
+  ai-suggestion:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Add fun comment to index.js
+        run: |
+          echo "// Fun tip: This line was added by an AI workflow! 🤖" | cat - index.js > temp && mv temp index.js
+      - name: Commit and push changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: 'chore: AI workflow added a fun comment to index.js'
+          file_pattern: index.js
