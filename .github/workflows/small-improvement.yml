@@ -14,12 +14,10 @@ jobs:
         with:
           fetch-depth: 0
       - name: Fetch base branch
-        if: github.event_name == 'pull_request'
         run: |
           git fetch --no-tags --depth=1 origin ${{ github.event.pull_request.base.ref }}
       - name: Check for docs or small changes
         id: check
-        if: github.event_name == 'pull_request'
         run: |
           BASE_SHA=$(git merge-base origin/${{ github.event.pull_request.base.ref }} ${{ github.event.pull_request.head.sha }})
           CHANGED_FILES=$(git diff --name-only $BASE_SHA ${{ github.event.pull_request.head.sha }})
@@ -41,13 +39,13 @@ jobs:
           echo "docs=$DOCS_CHANGED" >> $GITHUB_OUTPUT
           echo "small=$SMALL_CHANGE" >> $GITHUB_OUTPUT
       - name: Add label for docs
-        if: github.event_name == 'pull_request' && steps.check.outputs.docs == 'true'
+        if: steps.check.outputs.docs == 'true'
         uses: actions-ecosystem/action-add-labels@v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           labels: docs
       - name: Add label for small improvement
-        if: github.event_name == 'pull_request' && steps.check.outputs.small == 'true'
+        if: steps.check.outputs.small == 'true'
         uses: actions-ecosystem/action-add-labels@v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
