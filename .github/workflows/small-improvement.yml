@@ -17,15 +17,12 @@ jobs:
         if: github.event_name == 'pull_request'
         run: |
           git fetch --no-tags --depth=1 origin ${{ github.event.pull_request.base.ref }}
-      - name: Get changed files
-        id: files
-        if: github.event_name == 'pull_request'
-        run: |
-          echo "CHANGED_FILES=$(git diff --name-only FETCH_HEAD...${{ github.event.pull_request.head.sha }})" >> $GITHUB_ENV
       - name: Check for docs or small changes
         id: check
         if: github.event_name == 'pull_request'
         run: |
+          BASE_SHA=$(git merge-base origin/${{ github.event.pull_request.base.ref }} ${{ github.event.pull_request.head.sha }})
+          CHANGED_FILES=$(git diff --name-only $BASE_SHA ${{ github.event.pull_request.head.sha }})
           DOCS_CHANGED=false
           SMALL_CHANGE=false
           for file in $CHANGED_FILES; do
@@ -34,7 +31,10 @@ jobs:
             fi
           done
           # Count total lines changed
-          LINES_CHANGED=$(git diff --shortstat FETCH_HEAD...${{ github.event.pull_request.head.sha }} | awk '{print ($4+$6)}')
+          LINES_CHANGED=$(git diff --numstat $BASE_SHA ${{ github.event.pull_request.head.sha }} | awk '{add += $1 + $2} END {print add}')
+          if [[ -z "$LINES_CHANGED" ]]; then
+            LINES_CHANGED=0
+          fi
           if [[ $LINES_CHANGED -le 20 ]]; then
             SMALL_CHANGE=true
           fi
