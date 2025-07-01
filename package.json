@@ -1,6 +1,6 @@
 {
   "name": "carrot-scan",
-  "version": "1.42.98",
+  "version": "1.42.99",
   "description": "Command-line tool for detecting vulnerabilities in files and directories.",
   "main": "index.js",
   "types": "index.d.ts",
