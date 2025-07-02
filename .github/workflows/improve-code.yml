@@ -13,8 +13,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-       # with:
-       #   persist-credentials: false
+        with:
+          token: ${{ secrets.GH_PAT }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -26,9 +26,6 @@ jobs:
 
       - name: Run Prettier (small improvement)
         run: npx prettier --write .
-
-      - name: Configure PAT for push
-        run: git remote set-url origin https://x-access-token:${{ secrets.GH_PAT }}@github.com/${{ github.repository }}
 
       - name: Commit and push changes
         run: |
