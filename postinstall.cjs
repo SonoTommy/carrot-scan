@@ -12,15 +12,15 @@ if (isInteractive) {
   console.log('⭐ If you liked but an star: ' + repoUrl + '\n');
   if (shouldOpen) {
     try {
-      const cmd = process.platform === 'darwin'
-        ? `open "${repoUrl}"`
-        : process.platform === 'win32'
-          ? `start "" "${repoUrl}"`
-          : `xdg-open "${repoUrl}"`;
+      const cmd =
+        process.platform === 'darwin'
+          ? `open "${repoUrl}"`
+          : process.platform === 'win32'
+            ? `start "" "${repoUrl}"`
+            : `xdg-open "${repoUrl}"`;
       exec(cmd);
     } catch (_) {
       /* Non‑fatal: ignore failures (e.g. CI or headless environments) */
     }
   }
 }
-
