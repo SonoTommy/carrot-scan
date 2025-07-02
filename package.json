@@ -1,6 +1,6 @@
 {
   "name": "carrot-scan",
-  "version": "2.0.7",
+  "version": "2.0.0",
   "description": "Command-line tool for detecting vulnerabilities in files and directories.",
   "main": "index.js",
   "types": "index.d.ts",
@@ -24,8 +24,8 @@
     "start-api": "node ./src/api.js",
     "postinstall": "node ./postinstall.cjs",
     "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
-    "package": "vsce package"
+  "watch":   "tsc -watch -p ./",
+  "package": "vsce package"
   },
   "exports": {
     ".": {
@@ -93,13 +93,13 @@
     "@fastify/swagger": "^6.1.1",
     "@fastify/swagger-ui": "^4.2.0",
     "@nodesecure/js-x-ray": "^9.0.0",
-    "carrot-scan": "workspace:*",
     "chalk": "^5.4.1",
     "commander": "^14.0.0",
     "fastify": "^4.29.1",
     "globby": "^14.1.0",
     "typhonjs-escomplex": "^0.1.0",
-    "yaml": "^2.8.0"
+    "yaml": "^2.8.0",
+    "carrot-scan" : "workspace:*"
   },
   "devDependencies": {
     "@eslint/js": "^9.29.0",
