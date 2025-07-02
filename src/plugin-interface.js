@@ -1,5 +1,6 @@
 // src/plugin-interface.js
 
+
 /**
  * @typedef {'info'|'warning'|'error'} Severity
  *

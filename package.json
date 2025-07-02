@@ -1,12 +1,16 @@
 {
   "name": "carrot-scan",
-  "version": "1.34.37",
+  "version": "2.0.0",
   "description": "Command-line tool for detecting vulnerabilities in files and directories.",
   "main": "index.js",
   "types": "index.d.ts",
   "bin": {
     "carrot-scan": "./cli.js"
   },
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
   "type": "module",
   "scripts": {
     "test": "node --experimental-vm-modules node_modules/.bin/jest --config jest.config.mjs --coverage",
@@ -14,7 +18,10 @@
     "lint:fix": "eslint \"**/*.{js,ts}\" --config .eslintrc.cjs --fix",
     "format": "prettier --write \"**/*.{js,ts,json,md}\"",
     "start-api": "node ./src/api.js",
-    "postinstall": "node ./postinstall.cjs"
+    "postinstall": "node ./postinstall.cjs",
+    "compile": "tsc -p ./",
+  "watch":   "tsc -watch -p ./",
+  "package": "vsce package"
   },
   "exports": {
     ".": {
@@ -87,7 +94,8 @@
     "fastify": "^4.29.1",
     "globby": "^14.1.0",
     "typhonjs-escomplex": "^0.1.0",
-    "yaml": "^2.8.0"
+    "yaml": "^2.8.0",
+    "carrot-scan" : "workspace:*"
   },
   "devDependencies": {
     "@eslint/js": "^9.29.0",

@@ -81,12 +81,32 @@ carrot-scan src/ -c
 carrot-scan . -c --json > report.json
 ```
 
+
 ```bash
 # Scan a single file
 carrot-scan path/to/file.js -c
 
 # Display version
 carrot-scan --version
+```
+
+
+### Supply-Chain (SBOM) Generation
+
+Generate a Software Bill of Materials (SBOM) with embedded vulnerability information from the OSV public API. Supports CycloneDX XML and SARIF formats.
+
+```bash
+# Generate CycloneDX SBOM for the current directory (default)
+carrot-scan sbom .
+
+# Generate SARIF output instead of XML
+carrot-scan sbom . --sarif
+
+# Include devDependencies in the SBOM
+carrot-scan sbom . --dev
+
+# Specify output file path
+carrot-scan sbom . --sarif -o path/to/report.sarif
 ```
 
 ### Advanced Configuration

@@ -1,0 +1,12 @@
+## [2.0.0] – 2025-07-02
+
+### Added
+- Supply-Chain (SBOM) Generation command (`carrot-scan sbom`)  
+- CycloneDX XML & SARIF export  
+- OSV HTTP integration for CVE lookup  
+
+### Changed
+- Bumped major version to 2.0.0 to reflect breaking changes
+
+### Fixed
+- …

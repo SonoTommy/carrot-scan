@@ -1,0 +1,24 @@
+{
+  "name": "carrot-scan-cli",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "carrot-scan": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc -p ."
+  },
+  "dependencies": {
+    "@cyclonedx/cyclonedx-library": "^8.4.0",
+    "carrot-scan-sbom": "file:../sbom",
+    "commander": "^11.0.0",
+    "license-checker-rseidelsohn": "^4.4.2",
+    "node-fetch": "^3.3.2",
+    "p-limit": "^6.2.0"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.0"
+  }
+}
