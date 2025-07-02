@@ -21,7 +21,14 @@ const BAD_PATTERNS = [
   /preg_replace\s*\(.*\/e/gi,
 ];
 
+
+/**
+ * Counts the number of matches for all BAD_PATTERNS in the given text.
+ * @param {string} text
+ * @returns {number}
+ */
 function heuristicBadness(text) {
+  if (typeof text !== 'string' || !text) return 0;
   return BAD_PATTERNS.reduce((count, re) => {
     const matches = text.match(re);
     return count + (matches ? matches.length : 0);
