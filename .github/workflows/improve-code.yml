@@ -21,6 +21,14 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Run GitHub Copilot CLI (if available)
+        run: |
+          if command -v copilot &> /dev/null; then
+            copilot suggest . --write || echo "Copilot CLI ran but did not apply changes."
+          else
+            echo "Copilot CLI not installed. Skipping Copilot step."
+          fi
+
       - name: Install Prettier
         run: npm install --save-dev prettier
 
