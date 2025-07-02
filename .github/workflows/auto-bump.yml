@@ -27,12 +27,19 @@ jobs:
         with:
           fetch-depth: 0
           token: ${{ secrets.GH_PAT }}
+      - name: Discover yarn.lock paths
+        id: discover_lockfiles
+        run: |
+          LOCKFILES=$(find . -type f -name 'yarn.lock' | sed 's|^\./||')
+          echo "lockfiles<<EOF" >> $GITHUB_OUTPUT
+          echo "$LOCKFILES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '20'
           cache: 'yarn'
-          cache-dependency-path: 'packages/carrot-scan/yarn.lock'
+          cache-dependency-path: ${{ steps.discover_lockfiles.outputs.lockfiles }}
       - name: Configure Git
         run: |
           git config user.name "github-actions[bot]"
