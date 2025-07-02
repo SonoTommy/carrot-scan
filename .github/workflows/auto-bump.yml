@@ -32,7 +32,7 @@ jobs:
         with:
           node-version: '20'
           cache: 'yarn'
-          cache-dependency-path: packages/carrot-scan/yarn.lock
+          cache-dependency-path: '**/yarn.lock'
       - name: Configure Git
         run: |
           git config user.name "github-actions[bot]"
