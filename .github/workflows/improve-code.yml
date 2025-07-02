@@ -21,6 +21,10 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Install GitHub Copilot CLI
+        run: |
+          npm install -g @githubnext/github-copilot-cli || echo "Copilot CLI install failed or not available."
+
       - name: Run GitHub Copilot CLI (if available)
         run: |
           if command -v copilot &> /dev/null; then
