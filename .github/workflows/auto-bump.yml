@@ -31,7 +31,7 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '20'
-          cache: 'npm'
+          cache: 'yarn'
       - name: Configure Git
         run: |
           git config user.name "github-actions[bot]"
@@ -43,7 +43,7 @@ jobs:
           VERSION=${BUMP_OUTPUT#v}
           echo "new-version=$VERSION" >> $GITHUB_OUTPUT
       - name: Install dependencies
-        run: npm install
+        run: yarn install
       - name: Create Pull Request
         id: create_pr
         uses: peter-evans/create-pull-request@v7
