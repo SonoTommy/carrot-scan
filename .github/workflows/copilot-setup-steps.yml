@@ -1,0 +1,34 @@
+name: "Copilot Setup Steps"
+
+# Trigger only when this file changes, so you can validate it via Actions
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+  pull_request:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+
+jobs:
+  # This exact job name is required
+  copilot-setup-steps:
+    # Use GitHub’s Ubuntu runner (or change per your needs)
+    runs-on: ubuntu-latest
+    # Give only the minimal permissions Copilot needs
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          # Match your local dev (v20 is a good default)
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install project dependencies
+        run: npm ci
