@@ -1,18 +1,14 @@
 name: Auto Bump & Publish
 
-permissions:
-  contents: write
-  pull-requests: write
-
 on:
   workflow_dispatch:
   schedule:
-    - cron: '5-59/5 * * * *'   # every 5 minutes starting at minute 5
-    - cron: '0 * * * *'        # fallback hourly at minute 0
+    # Ogni 5 minuti
+    - cron: '*/5 * * * *'
 
-
+# Blocca le esecuzioni parallele: le nuove run vengono messe in coda
 concurrency:
-  group: auto-bump
+  group: auto-bump-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -25,18 +21,22 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GH_PAT }}
           ref: main
+
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '20'
+
       - name: Configure npm auth
         run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+
       - name: Bump version for publish
         id: bump_publish
         run: |
           npm version patch --no-git-tag-version
           NEW_VERSION=$(node -p "require('./package.json').version")
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+
       - name: Commit version bump
         run: |
           git config user.name "github-actions[bot]"
@@ -48,15 +48,9 @@ jobs:
             git commit -m "chore(release): bump version to ${{ steps.bump_publish.outputs.new_version }}"
             git push origin main
           fi
-    
-  
+
       - name: Publish package
         run: |
           npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-     #test
-     # - name: Wait after publish
-     #   run: |
-     #     echo "Waiting 5 minutes before releasing concurrency lock"
-     #     sleep 300
