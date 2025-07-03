@@ -1,0 +1,1 @@
+Per favore, analizza il mio codice e fai qualche miglioria. Concentrati sui file README.md, index.js e cli.js. Aggiungi alcune funzioni utili.
