@@ -221,3 +221,6 @@ If you like carrot-scan and want to support its development, you can buy me a co
 
 ## Verbose Mode
 Use `--verbose` to output detailed logs during scanning.
+
+## Verbose Mode
+Use `--verbose` to output detailed logs during scanning.

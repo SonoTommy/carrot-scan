@@ -13,6 +13,7 @@ program
   .option('-j, --json', 'output raw JSON (good for CI)')
   .option('-i, --incremental', 'scan only changed files in the last commit')
   .option('-v, --verbose', 'output verbose logs')
+  .option('-v, --verbose', 'output verbose logs')
   .action(async (target, opts) => {
     // pick the first non-undefined flag; default otherwise
     const mode = opts.fast ? 'fast' : opts.complete ? 'complete' : 'default';
