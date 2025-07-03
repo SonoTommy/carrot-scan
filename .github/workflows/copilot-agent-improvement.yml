@@ -32,7 +32,7 @@ jobs:
           token: ${{ secrets.GH_PAT }}
       - name: Apply improvement with Copilot
         run: |
-          sed -i "1i console.log('App started successfully');" src/index.js
+          sed -i "1i console.log('App started successfully');" index.js
       - name: Commit and push improvement
         run: |
           git config user.name "github-actions[bot]"
