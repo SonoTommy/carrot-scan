@@ -7,7 +7,7 @@
   "bin": {
     "carrot-scan": "./cli.js"
   },
-  "private": true,
+  "private": false,
   "workspaces": [
     "."
   ],
