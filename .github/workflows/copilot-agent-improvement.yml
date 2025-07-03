@@ -35,12 +35,43 @@ jobs:
         with:
           github-token: ${{ secrets.GH_PAT }}
           script: |
-            await github.rest.issues.create({
+            // 1. Create a new issue without assignees
+            const issue = await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
               title: "Miglioramenti al codice",
-              body: "Per favore analizza il mio codice e fai qualche miglioria sui file README.md, index.js e cli.js, aggiungi alcune funzioni utili.",
-              assignees: ["copilot-swe-agent"]
+              body: "Per favore analizza il mio codice e fai qualche miglioria sui file README.md, index.js e cli.js, aggiungi alcune funzioni utili."
+            });
+            // 2. Fetch the Copilot bot ID via GraphQL
+            const query = `
+              query($owner: String!, $repo: String!) {
+                repository(owner: $owner, name: $repo) {
+                  suggestedActors(capabilities: [CAN_BE_ASSIGNED], first: 1) {
+                    nodes {
+                      ... on Bot { id }
+                    }
+                  }
+                }
+              }
+            `;
+            const response = await github.graphql(query, {
+              owner: context.repo.owner,
+              repo: context.repo.repo
+            });
+            const botId = response.repository.suggestedActors.nodes[0].id;
+            // 3. Assign the issue to the Copilot bot via GraphQL mutation
+            const mutation = `
+              mutation($issueId: ID!, $assigneeIds: [ID!]!) {
+                replaceActorsForAssignable(input: { assignableId: $issueId, assigneeIds: $assigneeIds }) {
+                  assignable {
+                    ... on Issue { id }
+                  }
+                }
+              }
+            `;
+            await github.graphql(mutation, {
+              issueId: issue.data.node_id,
+              assigneeIds: [botId]
             });
   publish:
     needs: improve-with-copilot
