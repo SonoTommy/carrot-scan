@@ -1,4 +1,4 @@
-name: Auto Bump & Publish
+name: Auto Bump & Publish - with copilot
 
 on:
   workflow_dispatch:
