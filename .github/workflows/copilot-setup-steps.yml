@@ -19,7 +19,7 @@ jobs:
     permissions:
       contents: read
     env:
-      GH_TOKEN: ${{ secrets.GH_PAT }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
       - name: Checkout code
@@ -41,3 +41,7 @@ jobs:
 
       - name: Ask Copilot a test question
         run: gh copilot suggest "what is 2 + 2?"
+
+      - name: Warn about Copilot CLI auth limitations
+        run: |
+          echo "⚠️ Copilot CLI authentication requires an interactive 'gh auth login --web' session and is not supported in non-interactive CI environments like GitHub Actions."
