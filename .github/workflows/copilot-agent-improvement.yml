@@ -1,32 +1,38 @@
-name: Copilot Agent Improvement
+name: Auto Bump and Publish
 
 on:
-  schedule:
-    - cron: '0 3 * * *' # Runs daily at 3:00 AM UTC
+  push:
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
-  copilot-improvement:
+  bump-publish:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'yarn'
 
-      - name: Install dependencies
-        run: npm install
-
-      - name: Run Copilot Agent for small improvement
+      - name: Install Yarn
         run: |
-          # Replace this with your actual Copilot agent invocation
-          node cli.js --copilot-agent --improve --max-lines=70
+          npm install -g yarn
 
-      - name: Commit and push changes
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: "chore: Copilot agent small improvement"
-          branch: copilot-improvement
+      - name: Install dependencies with Yarn
+        run: yarn install --frozen-lockfile
+
+      - name: Bump version and publish
+        id: bump_publish
+        run: |
+          yarn version --patch --no-git-tag-version
+          NEW_VERSION=$(node -p "require('./package.json').version")
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Publish package
+        run: |
+          yarn npm publish --access public
