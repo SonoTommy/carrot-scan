@@ -45,6 +45,7 @@ program
   .option('-v, --verbose', 'output verbose logs')
   .option('-v, --verbose', 'output verbose logs')
   .option('-v, --verbose', 'output verbose logs')
+  .option('-v, --verbose', 'output verbose logs')
   .action(async (target, opts) => {
     // pick the first non-undefined flag; default otherwise
     const mode = opts.fast ? 'fast' : opts.complete ? 'complete' : 'default';
