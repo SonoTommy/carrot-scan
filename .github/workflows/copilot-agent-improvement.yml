@@ -34,37 +34,49 @@ jobs:
         run: |
           node - << 'EOF'
           const fs = require('fs');
-          // Add verbose option to CLI
+          // Add verbose option to CLI if not already present
           let cli = fs.readFileSync('cli.js', 'utf8');
-          cli = cli.replace(
-            ".option('-i, --incremental', 'scan only changed files in the last commit')",
-            ".option('-i, --incremental', 'scan only changed files in the last commit')\n  .option('-v, --verbose', 'output verbose logs')"
-          );
-          fs.writeFileSync('cli.js', cli);
-          // Extend scan() signature to accept verbose
+          if (!cli.includes(".option('-v, --verbose'")) {
+            cli = cli.replace(
+              ".option('-i, --incremental', 'scan only changed files in the last commit')",
+              ".option('-i, --incremental', 'scan only changed files in the last commit')\n  .option('-v, --verbose', 'output verbose logs')"
+            );
+            fs.writeFileSync('cli.js', cli);
+          }
+          // Extend scan() signature to accept verbose if not already present
           let scanner = fs.readFileSync('scanner.js', 'utf8');
-          scanner = scanner.replace(
-            "export async function scan(target, { mode = 'default', incremental = false, stream = false } = {})",
-            "export async function scan(target, { mode = 'default', incremental = false, stream = false, verbose = false } = {})"
-          );
-          fs.writeFileSync('scanner.js', scanner);
-          // Update README.md with verbose usage
+          if (!scanner.includes("verbose = false")) {
+            scanner = scanner.replace(
+              "export async function scan(target, { mode = 'default', incremental = false, stream = false } = {})",
+              "export async function scan(target, { mode = 'default', incremental = false, stream = false, verbose = false } = {})"
+            );
+            fs.writeFileSync('scanner.js', scanner);
+          }
+          // Update README.md with verbose usage if not already present
           let readme = fs.readFileSync('README.md', 'utf8');
-          readme += "\n## Verbose Mode\nUse `--verbose` to output detailed logs during scanning.\n";
-          fs.writeFileSync('README.md', readme);
-          // Prepend CHANGELOG entry for verbose flag
+          if (!readme.includes("## Verbose Mode")) {
+            readme += "\n## Verbose Mode\nUse `--verbose` to output detailed logs during scanning.\n";
+            fs.writeFileSync('README.md', readme);
+          }
+          // Prepend CHANGELOG entry for verbose flag if not already present
           const pkg = require('./package.json');
           const version = pkg.version;
           const date = new Date().toISOString().split('T')[0];
           let changelog = fs.readFileSync('CHANGELOG.md', 'utf8');
-          changelog = `## [${version}] - ${date}\n\n### Added\n- \`--verbose\` flag for detailed logging\n\n${changelog}`;
-          fs.writeFileSync('CHANGELOG.md', changelog);
+          const entryHeader = `## [${version}] - ${date}`;
+          const entryContent = `### Added\n- \\`--verbose\\` flag for detailed logging`;
+          if (!changelog.startsWith(entryHeader) && !changelog.includes(entryContent)) {
+            changelog = `${entryHeader}\n\n${entryContent}\n\n${changelog}`;
+            fs.writeFileSync('CHANGELOG.md', changelog);
+          }
           EOF
       - name: Update CHANGELOG.md
         run: |
           VERSION=$(node -p "require('./package.json').version")
           DATE=$(date +%Y-%m-%d)
-          echo -e "## [$VERSION] - $DATE\n\n- Inserted startup log message\n" | cat - CHANGELOG.md > CHANGELOG.tmp && mv CHANGELOG.tmp CHANGELOG.md
+          if ! grep -q "## \\[$VERSION\\] - $DATE" CHANGELOG.md || ! grep -q "\\- Inserted startup log message" CHANGELOG.md; then
+            echo -e "## [$VERSION] - $DATE\n\n- Inserted startup log message\n" | cat - CHANGELOG.md > CHANGELOG.tmp && mv CHANGELOG.tmp CHANGELOG.md
+          fi
       - name: Commit and push improvement
         run: |
           git config user.name "github-actions[bot]"
