@@ -39,22 +39,11 @@ jobs:
           BUMP_OUTPUT=$(npm version minor -m "chore(release): bump version to %s")
           VERSION=${BUMP_OUTPUT#v}
           echo "new-version=$VERSION" >> $GITHUB_OUTPUT
-      - name: Create Pull Request
-        id: create_pr
-        uses: peter-evans/create-pull-request@v7
-        with:
-          token: ${{ secrets.GH_PAT }}
-          commit-message: 'chore(release): bump version to ${{ steps.bump.outputs.new-version }}'
-          branch: auto-bump-${{ steps.bump.outputs.new-version }}
-          title: '🔼 Bump to ${{ steps.bump.outputs.new-version }}'
-          body: 'Version bumped automatically.'
-          delete-branch: true
-      - name: Merge Pull Request
-        if: ${{ steps.create_pr.outputs.pull-request-number }}
+      - name: Push version bump
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
         run: |
-          gh pr merge ${{ steps.create_pr.outputs.pull-request-number }} --squash --delete-branch --repo ${{ github.repository }}
+          git push origin main
   publish:
     runs-on: ubuntu-latest
     steps:
