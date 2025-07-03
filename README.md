@@ -218,3 +218,6 @@ If you like carrot-scan and want to support its development, you can buy me a co
 ## License
 
 © 2025 Tommaso “Tommy” [MIT License](LICENSE)
+
+## Verbose Mode
+Use `--verbose` to output detailed logs during scanning.

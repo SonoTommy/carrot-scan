@@ -37,7 +37,7 @@ const defaultWeights = {
  * @param {string} target - file or directory
  * @param {{mode?: string, incremental?: boolean, stream?: boolean}} opts
  */
-export async function scan(target, { mode = 'default', incremental = false, stream = false } = {}) {
+export async function scan(target, { mode = 'default', incremental = false, stream = false, verbose = false } = {}) {
   if (stream) {
     const emitter = new EventEmitter();
     process.nextTick(async () => {
