@@ -30,66 +30,27 @@ jobs:
         with:
           fetch-depth: 0
           token: ${{ secrets.GH_PAT }}
-      - name: Apply real code improvement
+      - name: Install Copilot CLI
+        run: npm install -g @githubnext/copilot-cli
+      - name: Generate code improvements
+        id: generate
         run: |
-          node - << 'EOF'
-          const fs = require('fs');
-          // Add verbose option to CLI if not already present
-          let cli = fs.readFileSync('cli.js', 'utf8');
-          if (!cli.includes(".option('-v, --verbose'")) {
-            cli = cli.replace(
-              ".option('-i, --incremental', 'scan only changed files in the last commit')",
-              ".option('-i, --incremental', 'scan only changed files in the last commit')\n  .option('-v, --verbose', 'output verbose logs')"
-            );
-            fs.writeFileSync('cli.js', cli);
-          }
-          // Extend scan() signature to accept verbose if not already present
-          let scanner = fs.readFileSync('scanner.js', 'utf8');
-          if (!scanner.includes("verbose = false")) {
-            scanner = scanner.replace(
-              "export async function scan(target, { mode = 'default', incremental = false, stream = false } = {})",
-              "export async function scan(target, { mode = 'default', incremental = false, stream = false, verbose = false } = {})"
-            );
-            fs.writeFileSync('scanner.js', scanner);
-          }
-          // Update README.md with verbose usage only if not already present
-          let readme = fs.readFileSync('README.md', 'utf8');
-          const verboseHeader = "## Verbose Mode";
-          const verboseUsage = "Use `--verbose` to output detailed logs during scanning.";
-          if (!readme.includes(verboseHeader) && !readme.includes(verboseUsage)) {
-            readme += `\n${verboseHeader}\n${verboseUsage}\n`;
-            fs.writeFileSync('README.md', readme);
-          }
-          // Prepend CHANGELOG entry for verbose flag if not already present
-          const pkg = require('./package.json');
-          const version = pkg.version;
-          const date = new Date().toISOString().split('T')[0];
-          let changelog = fs.readFileSync('CHANGELOG.md', 'utf8');
-          const entryHeader = `## [${version}] - ${date}`;
-          const entryContent = `### Added\n- \`--verbose\` flag for detailed logging`;
-          if (!changelog.startsWith(entryHeader) && !changelog.includes(entryContent)) {
-            changelog = `${entryHeader}\n\n${entryContent}\n\n${changelog}`;
-            fs.writeFileSync('CHANGELOG.md', changelog);
-          }
-          EOF
+          # Get the most recent changelog header to exclude repeated suggestions
+          LAST_ENTRY=$(grep -m1 '^## ' CHANGELOG.md)
+          # Generate and apply improvements excluding already documented ones
+          copilot-cli improvements --source . --exclude "$LAST_ENTRY" --apply > improvements.summary || echo "no improvements"
       - name: Update CHANGELOG.md
         run: |
-          VERSION=$(node -p "require('./package.json').version")
-          DATE=$(date +%Y-%m-%d)
-          # Only insert the startup log message if it's not already present
-          if ! grep -q "\- Inserted startup log message" CHANGELOG.md; then
-            if grep -q "## \\[$VERSION\\] - $DATE" CHANGELOG.md; then
-              # Append message immediately after the version header
-              sed -i "0,/## \\[$VERSION\\] - $DATE/ s/## \\[$VERSION\\] - $DATE/&\n\n- Inserted startup log message/" CHANGELOG.md
-            else
-              echo -e "## [$VERSION] - $DATE\n\n- Inserted startup log message\n" | cat - CHANGELOG.md > CHANGELOG.tmp && mv CHANGELOG.tmp CHANGELOG.md
-            fi
+          if [ -s improvements.summary ]; then
+            VERSION=$(node -p "require('./package.json').version")
+            DATE=$(date +%Y-%m-%d)
+            echo -e "## [$VERSION] - $DATE\n\n### Improvements\n$(cat improvements.summary)\n" | cat - CHANGELOG.md > CHANGELOG.tmp && mv CHANGELOG.tmp CHANGELOG.md
           fi
       - name: Commit and push improvement
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add cli.js scanner.js README.md CHANGELOG.md
+          git add .
           git commit -m "chore: add verbose flag for detailed logging" || echo "No changes to commit"
           git push origin main
   publish:
