@@ -40,13 +40,11 @@ jobs:
       - name: Bump patch version
         id: bump
         run: |
-          cd packages/carrot-scan
           BUMP_OUTPUT=$(npm version minor -m "chore(release): bump version to %s")
           VERSION=${BUMP_OUTPUT#v}
           echo "new-version=$VERSION" >> $GITHUB_OUTPUT
       - name: Install dependencies
         run: |
-          cd packages/carrot-scan
           yarn install
       - name: Create Pull Request
         id: create_pr
