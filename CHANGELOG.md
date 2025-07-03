@@ -1,3 +1,12 @@
+## [2.0.880] - 2025-07-03
+
+- Inserted startup log message
+
+## [2.0.880] - 2025-07-03
+
+### Added
+- `--verbose` flag for detailed logging
+
 ## [2.0.879] - 2025-07-03
 
 - Inserted startup log message
