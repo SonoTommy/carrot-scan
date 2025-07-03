@@ -29,8 +29,6 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '20'
-          cache: 'yarn'
-          cache-dependency-path: yarn.lock
       - name: Configure Git
         run: |
           git config user.name "github-actions[bot]"
