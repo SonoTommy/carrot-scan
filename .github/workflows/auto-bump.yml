@@ -54,7 +54,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
         run: |
-          gh pr merge ${{ steps.create_pr.outputs.pull-request-number }} --squash --delete-branch --auto --repo ${{ github.repository }}
+          gh pr merge ${{ steps.create_pr.outputs.pull-request-number }} --squash --delete-branch --repo ${{ github.repository }}
   publish:
     runs-on: ubuntu-latest
     steps:
