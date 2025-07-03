@@ -32,15 +32,25 @@ jobs:
       - name: Configure npm auth
         run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
 
+      - name: Install dependencies
+        run: npm ci
+
       - name: Copilot Agent Small Improvement
         run: |
-          # This is a placeholder for the Copilot agent automation.
-          # Replace the following line with your actual Copilot agent invocation.
-          # The agent should make a small improvement (10-70 lines), e.g., add a feature or improve docs.
-          echo "[Copilot Agent] Suggesting and applying a small improvement..."
-          # Example: node cli.js --copilot-agent --improve --max-lines=70
-          # If you have a script, call it here.
-          # If not, integrate your Copilot agent as needed.
+          node cli.js --copilot-agent --improve --max-lines=70
+
+      - name: Commit Copilot improvements
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          if git diff --cached --quiet; then
+            echo "No Copilot improvements to commit."
+          else
+            git commit -m "chore: apply Copilot agent improvements"
+            git push origin main
+          fi
+
       - name: Bump version for publish
         id: bump_publish
         run: |
