@@ -40,7 +40,7 @@ jobs:
               repo: context.repo.repo,
               title: "Miglioramenti al codice",
               body: "Per favore analizza il mio codice e fai qualche miglioria sui file README.md, index.js e cli.js, aggiungi alcune funzioni utili.",
-              assignees: ["copilot"]
+              assignees: ["copilot-swe-agent"]
             });
   publish:
     needs: improve-with-copilot
