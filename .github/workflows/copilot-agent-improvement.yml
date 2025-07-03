@@ -1,39 +1,50 @@
-name: Auto Bump and Publish
+name: Auto Bump & Publish
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
+  schedule:
+    # Ogni 5 minuti
+    - cron: '*/5 * * * *'
+  repository_dispatch:
+    types: [auto-bump]
+
+# Blocca le esecuzioni parallele: le nuove run vengono messe in coda
+concurrency:
+  group: auto-bump-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  bump-publish:
+  publish:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - name: Checkout main branch
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GH_PAT }}
+          ref: main
 
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '20'
 
-      - name: Install Yarn
-        run: npm install -g yarn
+      - name: Configure npm auth
+        run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
 
-      - name: Install dependencies with Yarn
-        run: yarn install
-
-      - name: Generate yarn.lock
-        run: yarn import
-
-      - name: Install dependencies with Yarn
-        run: yarn install
-
-      - name: Bump version and publish
+      - name: Copilot Agent Small Improvement
+        run: |
+          # This is a placeholder for the Copilot agent automation.
+          # Replace the following line with your actual Copilot agent invocation.
+          # The agent should make a small improvement (10-70 lines), e.g., add a feature or improve docs.
+          echo "[Copilot Agent] Suggesting and applying a small improvement..."
+          # Example: node cli.js --copilot-agent --improve --max-lines=70
+          # If you have a script, call it here.
+          # If not, integrate your Copilot agent as needed.
+      - name: Bump version for publish
         id: bump_publish
         run: |
-          yarn version --patch --no-git-tag-version
+          npm version patch --no-git-tag-version
           NEW_VERSION=$(node -p "require('./package.json').version")
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
 
@@ -41,7 +52,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add package.json yarn.lock
+          git add package.json
           if git diff --cached --quiet; then
             echo "No version bump to commit."
           else
@@ -51,6 +62,17 @@ jobs:
 
       - name: Publish package
         run: |
-          yarn npm publish --access public
+          npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Trigger next run
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GH_PAT }}
+          script: |
+            await github.rest.repos.createDispatchEvent({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              event_type: 'auto-bump',
+              client_payload: {}
+            })
