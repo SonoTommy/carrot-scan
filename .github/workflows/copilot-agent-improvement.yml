@@ -52,10 +52,12 @@ jobs:
             );
             fs.writeFileSync('scanner.js', scanner);
           }
-          // Update README.md with verbose usage if not already present
+          // Update README.md with verbose usage only if not already present
           let readme = fs.readFileSync('README.md', 'utf8');
-          if (!readme.includes("## Verbose Mode")) {
-            readme += "\n## Verbose Mode\nUse `--verbose` to output detailed logs during scanning.\n";
+          const verboseHeader = "## Verbose Mode";
+          const verboseUsage = "Use `--verbose` to output detailed logs during scanning.";
+          if (!readme.includes(verboseHeader) && !readme.includes(verboseUsage)) {
+            readme += `\n${verboseHeader}\n${verboseUsage}\n`;
             fs.writeFileSync('README.md', readme);
           }
           // Prepend CHANGELOG entry for verbose flag if not already present
@@ -74,8 +76,14 @@ jobs:
         run: |
           VERSION=$(node -p "require('./package.json').version")
           DATE=$(date +%Y-%m-%d)
-          if ! grep -q "## \\[$VERSION\\] - $DATE" CHANGELOG.md || ! grep -q "\\- Inserted startup log message" CHANGELOG.md; then
-            echo -e "## [$VERSION] - $DATE\n\n- Inserted startup log message\n" | cat - CHANGELOG.md > CHANGELOG.tmp && mv CHANGELOG.tmp CHANGELOG.md
+          # Only insert the startup log message if it's not already present
+          if ! grep -q "\- Inserted startup log message" CHANGELOG.md; then
+            if grep -q "## \\[$VERSION\\] - $DATE" CHANGELOG.md; then
+              # Append message immediately after the version header
+              sed -i "0,/## \\[$VERSION\\] - $DATE/ s/## \\[$VERSION\\] - $DATE/&\n\n- Inserted startup log message/" CHANGELOG.md
+            else
+              echo -e "## [$VERSION] - $DATE\n\n- Inserted startup log message\n" | cat - CHANGELOG.md > CHANGELOG.tmp && mv CHANGELOG.tmp CHANGELOG.md
+            fi
           fi
       - name: Commit and push improvement
         run: |
