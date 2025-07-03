@@ -33,7 +33,7 @@ jobs:
         run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Copilot Agent Small Improvement
         run: |
