@@ -35,10 +35,11 @@ jobs:
       - name: Generate code improvements
         id: generate
         run: |
-          # Get the most recent changelog header to exclude repeated suggestions
-          LAST_ENTRY=$(grep -m1 '^## ' CHANGELOG.md)
-          # Generate and apply improvements excluding already documented ones
-          github-copilot-cli improvements --source . --exclude "$LAST_ENTRY" --apply > improvements.summary || echo "no improvements"
+          # Create a natural-language prompt for Copilot
+          PROMPT="Per favore, analizza il mio codice e fai qualche miglioria. Concentrati sui file README.md, index.js e cli.js. Aggiungi alcune funzioni utili."
+          echo "$PROMPT" > copilot-prompt.txt
+          # Use Copilot CLI with the custom prompt to generate and apply improvements
+          github-copilot-cli improvements --source . --prompt-file copilot-prompt.txt --apply > improvements.summary || echo "no improvements"
       - name: Update CHANGELOG.md
         run: |
           if [ -s improvements.summary ]; then
