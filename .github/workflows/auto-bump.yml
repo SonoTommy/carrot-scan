@@ -6,12 +6,13 @@ permissions:
 
 on:
   schedule:
-    - cron: '5-59/5 * * * *' # every 5 minutes starting at minute 5
-    - cron: '0 * * * *' # fallback hourly at minute 0
+    - cron: '5-59/5 * * * *'   # every 5 minutes starting at minute 5
+    - cron: '0 * * * *'     # fallback hourly at minute 0
   workflow_dispatch:
   push:
     branches:
       - main
+
 
 concurrency:
   group: auto-bump
@@ -31,8 +32,7 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '20'
-          cache: 'yarn'
-          cache-dependency-path: package.json
+          cache: 'npm'
       - name: Configure Git
         run: |
           git config user.name "github-actions[bot]"
@@ -44,8 +44,7 @@ jobs:
           VERSION=${BUMP_OUTPUT#v}
           echo "new-version=$VERSION" >> $GITHUB_OUTPUT
       - name: Install dependencies
-        run: |
-          yarn install
+        run: npm install
       - name: Create Pull Request
         id: create_pr
         uses: peter-evans/create-pull-request@v7
@@ -62,7 +61,6 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_PAT }}
         run: |
           gh pr merge ${{ steps.create_pr.outputs.pull-request-number }} --squash --delete-branch --repo ${{ github.repository }}
-
   publish:
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
@@ -92,14 +90,15 @@ jobs:
             git commit -m "chore(release): bump version to ${{ steps.bump_publish.outputs.new_version }}"
             git push origin main
           fi
-
+    
+  
       - name: Publish package
         run: |
           yarn publish --non-interactive
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-      #test
-      # - name: Wait after publish
-      #   run: |
-      #     echo "Waiting 5 minutes before releasing concurrency lock"
-      #     sleep 300
+     #test
+     # - name: Wait after publish
+     #   run: |
+     #     echo "Waiting 5 minutes before releasing concurrency lock"
+     #     sleep 300
