@@ -18,14 +18,7 @@ export class ESLintPlugin extends Plugin {
 
   async run(filePath, { content }) {
     try {
-      const args = [
-        '--no-eslintrc',
-        '--config',
-        'eslint:recommended',
-        '--format',
-        'json',
-        filePath,
-      ];
+      const args = [filePath, '--format', 'json'];
       const { stdout } = await exec(eslintBin, args);
       const results = JSON.parse(stdout);
       const errorCount = results.reduce((sum, r) => sum + r.errorCount, 0);

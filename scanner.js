@@ -37,7 +37,12 @@ const defaultWeights = {
  * @param {string} target - file or directory
  * @param {{mode?: string, incremental?: boolean, stream?: boolean}} opts
  */
-export async function scan(target, { mode = 'default', incremental = false, stream = false, verbose = false } = {}) {
+export async function scan(target, { mode = 'default', incremental = false, stream = false, plugin = null } = {}) {
+  const activePlugins = plugin ? plugins.filter(p => p.constructor.pluginName === plugin) : plugins;
+  if (plugin && !activePlugins.length) {
+    throw new Error(`Plugin not found: ${plugin}`);
+  }
+
   if (stream) {
     const emitter = new EventEmitter();
     process.nextTick(async () => {
@@ -78,7 +83,7 @@ export async function scan(target, { mode = 'default', incremental = false, stre
         }
         // 2. Plugin results collection with streaming emits
         const pluginResults = [];
-        for (const plugin of plugins) {
+        for (const plugin of activePlugins) {
           const matchingFiles = allFiles.filter((filePath) => plugin.constructor.applies(filePath));
           if (!matchingFiles.length) continue;
           for (const filePath of matchingFiles) {
@@ -175,7 +180,7 @@ export async function scan(target, { mode = 'default', incremental = false, stre
 
   // 2. Plugin results collection
   const pluginResults = [];
-  for (const plugin of plugins) {
+  for (const plugin of activePlugins) {
     const matchingFiles = allFiles.filter((filePath) => plugin.constructor.applies(filePath));
     if (!matchingFiles.length) continue;
 

@@ -49,17 +49,18 @@ export function buildServer({ port = 3000 } = {}) {
             },
             mode: { type: 'string', enum: ['fast', 'complete'] },
             json: { type: 'boolean' },
+            plugin: { type: 'string' },
           },
         },
       },
     },
     async (req, reply) => {
       try {
-        const { target, mode, json } = req.body;
+        const { target, mode, json, plugin } = req.body;
         const resolvedTarget = Array.isArray(target)
           ? target.map((t) => resolve(process.cwd(), t))
           : resolve(process.cwd(), target);
-        const result = await scan(resolvedTarget, { mode, json });
+        const result = await scan(resolvedTarget, { mode, json, plugin });
         return result;
       } catch (err) {
         req.log.error(err);
@@ -70,12 +71,12 @@ export function buildServer({ port = 3000 } = {}) {
 
   // Server-Sent Events (SSE) endpoint for streaming scan progress
   app.get('/scan/stream', async (req, reply) => {
-    const { target, mode, json } = req.query;
+    const { target, mode, json, plugin } = req.query;
     const resolvedTarget = Array.isArray(target)
       ? target.map((t) => resolve(process.cwd(), t))
       : resolve(process.cwd(), target);
     // Start scan in stream mode
-    const emitter = await scan(resolvedTarget, { mode, json, stream: true });
+    const emitter = await scan(resolvedTarget, { mode, json, stream: true, plugin });
 
     // Set SSE headers
     reply.raw.writeHead(200, {

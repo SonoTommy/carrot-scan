@@ -55,6 +55,10 @@ paths:
           name: json
           schema:
             type: boolean
+        - in: query
+          name: plugin
+          schema:
+            type: string
       responses:
         '200':
           description: SSE event stream of scan progress

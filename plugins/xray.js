@@ -14,19 +14,19 @@ export class XrayPlugin extends Plugin {
 
   async run(filePath, _content) {
     const { warnings } = await xrayInstance.analyseFile(filePath);
-    const count = warnings ? warnings.length : 0;
-    if (count > 0) {
-      return [
-        {
+    const messages = [];
+    if (warnings && warnings.length > 0) {
+      for (const warning of warnings) {
+        messages.push({
           pluginName: this.constructor.pluginName,
           filePath,
-          line: 0,
-          column: 0,
+          line: warning.location ? warning.location.start.line : 0,
+          column: warning.location ? warning.location.start.column : 0,
           severity: 'warning',
-          message: `${count} AST warnings detected`,
-        },
-      ];
+          message: warning.message,
+        });
+      }
     }
-    return [];
+    return messages;
   }
 }

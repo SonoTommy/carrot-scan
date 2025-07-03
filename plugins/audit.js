@@ -27,12 +27,12 @@ async function runNpmAudit(cwd) {
 export class AuditPlugin extends Plugin {
   static pluginName = 'audit';
 
-  static applies() {
-    return true;
+  static applies(filePath) {
+    return path.basename(filePath) === 'package.json';
   }
 
   async run(_filePath, { target }) {
-    const auditScore = await runNpmAudit(path.resolve(target));
+    const auditScore = await runNpmAudit(target);
     const severity = auditScore > 50 ? 'error' : auditScore > 20 ? 'warning' : 'info';
     return [
       {

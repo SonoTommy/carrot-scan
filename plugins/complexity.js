@@ -12,19 +12,20 @@ export class ComplexityPlugin extends Plugin {
 
   async run(filePath, { content }) {
     const report = escomplex.analyzeModule(content);
-    const cc = report.aggregate.cyclomatic;
-    if (cc > 10) {
-      return [
-        {
+    const messages = [];
+    for (const func of report.methods) {
+      const cc = func.cyclomatic;
+      if (cc > 10) {
+        messages.push({
           pluginName: this.constructor.pluginName,
           filePath,
-          line: 0,
+          line: func.lineStart,
           column: 0,
           severity: 'warning',
-          message: `Cyclomatic complexity ${cc} exceeds threshold of 10`,
-        },
-      ];
+          message: `Function '${func.name}' has a cyclomatic complexity of ${cc}, which exceeds the threshold of 10`,
+        });
+      }
     }
-    return [];
+    return messages;
   }
 }

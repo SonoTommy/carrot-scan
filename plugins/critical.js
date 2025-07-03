@@ -10,27 +10,27 @@ export class CriticalPlugin extends Plugin {
 
   async run(filePath, { content }) {
     const patterns = [
-      /rm\s+-rf\s+\//gi,
-      /eval\s*\(/gi,
+      { pattern: /rm\s+-rf\s+\//gi, message: 'Potential dangerous command: rm -rf /' },
+      { pattern: /eval\s*\(/gi, message: 'Use of eval() detected' },
       // add more patterns as needed
     ];
-    let count = 0;
-    for (const re of patterns) {
-      const matches = content.match(re);
-      if (matches) count += matches.length;
+    const messages = [];
+    const lines = content.split('\n');
+
+    for (const { pattern, message } of patterns) {
+      for (let i = 0; i < lines.length; i++) {
+        if (pattern.test(lines[i])) {
+          messages.push({
+            pluginName: this.constructor.pluginName,
+            filePath,
+            line: i + 1,
+            column: 0,
+            severity: 'error',
+            message: `${message} in line ${i + 1}`,
+          });
+        }
+      }
     }
-    if (count > 0) {
-      return [
-        {
-          pluginName: this.constructor.pluginName,
-          filePath,
-          line: 0,
-          column: 0,
-          severity: 'error',
-          message: `${count} critical pattern(s) detected`,
-        },
-      ];
-    }
-    return [];
+    return messages;
   }
 }
