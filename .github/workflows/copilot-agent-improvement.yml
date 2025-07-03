@@ -31,14 +31,14 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GH_PAT }}
       - name: Install Copilot CLI
-        run: npm install -g @githubnext/copilot-cli
+        run: npm install -g @githubnext/github-copilot-cli
       - name: Generate code improvements
         id: generate
         run: |
           # Get the most recent changelog header to exclude repeated suggestions
           LAST_ENTRY=$(grep -m1 '^## ' CHANGELOG.md)
           # Generate and apply improvements excluding already documented ones
-          copilot-cli improvements --source . --exclude "$LAST_ENTRY" --apply > improvements.summary || echo "no improvements"
+          github-copilot-cli improvements --source . --exclude "$LAST_ENTRY" --apply > improvements.summary || echo "no improvements"
       - name: Update CHANGELOG.md
         run: |
           if [ -s improvements.summary ]; then
