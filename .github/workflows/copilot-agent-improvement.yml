@@ -74,3 +74,19 @@ jobs:
     steps:
       - name: Hello World Check
         run: echo "Hello, world! GitHub Copilot job is set up and running."
+  improve-with-copilot:
+    needs: publish
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create improvement issue for Copilot coding agent
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GH_PAT }}
+          script: |
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: 'Add startup log message',
+              body: 'Use Copilot coding agent to insert console.log("App started successfully") at the top of src/index.js and save the changes.',
+              assignees: ['copilot-swe-agent']
+            });
