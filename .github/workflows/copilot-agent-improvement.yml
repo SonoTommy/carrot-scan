@@ -21,6 +21,9 @@ jobs:
       - name: Install Yarn
         run: npm install -g yarn
 
+      - name: Install dependencies with Yarn
+        run: yarn install
+
       - name: Generate yarn.lock
         run: yarn import
 
@@ -34,6 +37,20 @@ jobs:
           NEW_VERSION=$(node -p "require('./package.json').version")
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
 
+      - name: Commit version bump
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add package.json yarn.lock
+          if git diff --cached --quiet; then
+            echo "No version bump to commit."
+          else
+            git commit -m "chore(release): bump version to ${{ steps.bump_publish.outputs.new_version }}"
+            git push origin main
+          fi
+
       - name: Publish package
         run: |
           yarn npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
