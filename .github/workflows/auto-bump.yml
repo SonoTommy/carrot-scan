@@ -59,7 +59,7 @@ jobs:
       - name: Trigger next run
         uses: actions/github-script@v6
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GH_PAT }}
           script: |
             await github.rest.repos.createDispatchEvent({
               owner: context.repo.owner,
