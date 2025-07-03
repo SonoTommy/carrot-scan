@@ -1,0 +1,32 @@
+name: Copilot Agent Improvement
+
+on:
+  schedule:
+    - cron: '0 3 * * *' # Runs daily at 3:00 AM UTC
+  workflow_dispatch:
+
+jobs:
+  copilot-improvement:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run Copilot Agent for small improvement
+        run: |
+          # Replace this with your actual Copilot agent invocation
+          node cli.js --copilot-agent --improve --max-lines=70
+
+      - name: Commit and push changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: Copilot agent small improvement"
+          branch: copilot-improvement
