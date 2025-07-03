@@ -1,3 +1,7 @@
+## [2.0.893] - 2025-07-03
+
+- Inserted startup log message
+
 ## [2.0.892] - 2025-07-03
 
 - Inserted startup log message
