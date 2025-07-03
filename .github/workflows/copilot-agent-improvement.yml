@@ -64,7 +64,7 @@ jobs:
           const date = new Date().toISOString().split('T')[0];
           let changelog = fs.readFileSync('CHANGELOG.md', 'utf8');
           const entryHeader = `## [${version}] - ${date}`;
-          const entryContent = `### Added\n- \\`--verbose\\` flag for detailed logging`;
+          const entryContent = `### Added\n- \`--verbose\` flag for detailed logging`;
           if (!changelog.startsWith(entryHeader) && !changelog.includes(entryContent)) {
             changelog = `${entryHeader}\n\n${entryContent}\n\n${changelog}`;
             fs.writeFileSync('CHANGELOG.md', changelog);
