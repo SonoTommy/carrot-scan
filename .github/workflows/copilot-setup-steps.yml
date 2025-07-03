@@ -32,4 +32,4 @@ jobs:
           #cache-dependency-path: "package-lock.json"
 
       - name: Install project dependencies
-        run: npm ci
+        run: npm i
