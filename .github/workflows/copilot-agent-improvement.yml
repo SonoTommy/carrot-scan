@@ -1,4 +1,4 @@
-name: Auto Bump & Publish - with copilot
+name: Auto Bump & Publish - copito
 
 on:
   workflow_dispatch:
@@ -31,25 +31,6 @@ jobs:
 
       - name: Configure npm auth
         run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
-
-      - name: Install dependencies
-        run: yarn install --frozen-lockfile
-
-      - name: Copilot Agent Small Improvement
-        run: |
-          node cli.js --copilot-agent --improve --max-lines=70
-
-      - name: Commit Copilot improvements
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add .
-          if git diff --cached --quiet; then
-            echo "No Copilot improvements to commit."
-          else
-            git commit -m "chore: apply Copilot agent improvements"
-            git push origin main
-          fi
 
       - name: Bump version for publish
         id: bump_publish
@@ -86,3 +67,10 @@ jobs:
               event_type: 'auto-bump',
               client_payload: {}
             })
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Hello World Check
+        run: echo "Hello, world! GitHub Copilot job is set up and running."
