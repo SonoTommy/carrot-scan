@@ -16,34 +16,6 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  bump:
-    runs-on: ubuntu-latest
-    needs: publish
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-          token: ${{ secrets.GH_PAT }}
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '20'
-      - name: Configure Git
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-      - name: Bump patch version
-        id: bump
-        run: |
-          BUMP_OUTPUT=$(npm version minor -m "chore(release): bump version to %s")
-          VERSION=${BUMP_OUTPUT#v}
-          echo "new-version=$VERSION" >> $GITHUB_OUTPUT
-      - name: Push version bump
-        env:
-          GH_TOKEN: ${{ secrets.GH_PAT }}
-        run: |
-          git push origin main
   publish:
     runs-on: ubuntu-latest
     steps:
@@ -53,12 +25,16 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GH_PAT }}
           ref: main
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
       - name: Configure npm auth
         run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
       - name: Bump version for publish
         id: bump_publish
         run: |
-          yarn version --patch --no-git-tag-version
+          npm version patch --no-git-tag-version
           NEW_VERSION=$(node -p "require('./package.json').version")
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
       - name: Commit version bump
@@ -76,7 +52,7 @@ jobs:
   
       - name: Publish package
         run: |
-          yarn publish --non-interactive
+          npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
      #test
