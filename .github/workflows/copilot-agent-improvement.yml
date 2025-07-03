@@ -14,7 +14,34 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Hello World Check
+        run: echo "Hello, world! GitHub Copilot job is set up and running."
+  improve-with-copilot:
+    needs: copilot-setup-steps
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GH_PAT }}
+      - name: Apply improvement with Copilot
+        run: |
+          sed -i "1i console.log('App started successfully');" src/index.js
+      - name: Commit and push improvement
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add src/index.js
+          git commit -m "chore: insert startup log message" || echo "No changes to commit"
+          git push origin main
   publish:
+    needs: improve-with-copilot
     runs-on: ubuntu-latest
     steps:
       - name: Checkout main branch
@@ -67,25 +94,3 @@ jobs:
               event_type: 'auto-bump',
               client_payload: {}
             })
-  copilot-setup-steps:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - name: Hello World Check
-        run: echo "Hello, world! GitHub Copilot job is set up and running."
-  improve-with-copilot:
-    needs: publish
-    runs-on: ubuntu-latest
-    steps:
-      - name: Create improvement issue for Copilot coding agent
-        uses: actions/github-script@v6
-        with:
-          github-token: ${{ secrets.GH_PAT }}
-          script: |
-            await github.rest.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: 'Add startup log message',
-              body: 'Use Copilot coding agent to insert console.log("App started successfully") at the top of src/index.js and save the changes.',
-            });
