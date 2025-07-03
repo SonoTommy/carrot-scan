@@ -30,30 +30,18 @@ jobs:
         with:
           fetch-depth: 0
           token: ${{ secrets.GH_PAT }}
-      - name: Install Copilot CLI
-        run: npm install -g @githubnext/github-copilot-cli
-      - name: Generate code improvements
-        id: generate
-        run: |
-          # Create a natural-language prompt for Copilot
-          PROMPT="Per favore, analizza il mio codice e fai qualche miglioria. Concentrati sui file README.md, index.js e cli.js. Aggiungi alcune funzioni utili."
-          echo "$PROMPT" > copilot-prompt.txt
-          # Use Copilot CLI with the custom prompt to generate and apply improvements
-          github-copilot-cli improvements --source . --prompt-file copilot-prompt.txt --apply > improvements.summary || echo "no improvements"
-      - name: Update CHANGELOG.md
-        run: |
-          if [ -s improvements.summary ]; then
-            VERSION=$(node -p "require('./package.json').version")
-            DATE=$(date +%Y-%m-%d)
-            echo -e "## [$VERSION] - $DATE\n\n### Improvements\n$(cat improvements.summary)\n" | cat - CHANGELOG.md > CHANGELOG.tmp && mv CHANGELOG.tmp CHANGELOG.md
-          fi
-      - name: Commit and push improvement
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add .
-          git commit -m "chore: add verbose flag for detailed logging" || echo "No changes to commit"
-          git push origin main
+      - name: Create Copilot improvement issue
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GH_PAT }}
+          script: |
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: "Miglioramenti al codice",
+              body: "Per favore analizza il mio codice e fai qualche miglioria sui file README.md, index.js e cli.js, aggiungi alcune funzioni utili.",
+              assignees: ["copilot"]
+            });
   publish:
     needs: improve-with-copilot
     runs-on: ubuntu-latest
