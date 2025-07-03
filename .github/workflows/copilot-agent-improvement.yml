@@ -88,5 +88,4 @@ jobs:
               repo: context.repo.repo,
               title: 'Add startup log message',
               body: 'Use Copilot coding agent to insert console.log("App started successfully") at the top of src/index.js and save the changes.',
-              assignees: ['copilot-swe-agent']
             });
