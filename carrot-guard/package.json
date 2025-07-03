@@ -10,9 +10,11 @@
     "Other"
   ],
   "activationEvents": [
+    "onCommand:carrot-guard.scanFile",
+    "onCommand:carrot-guard.scanWorkspace",
+    "workspaceContains:carrot-scan.config.js",
     "onLanguage:javascript",
-    "onLanguage:typescript",
-    "workspaceContains:carrot-scan.config.js"
+    "onLanguage:typescript"
   ],
   "contributes": {
     "commands": [
