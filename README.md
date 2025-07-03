@@ -233,3 +233,6 @@ Use `--verbose` to output detailed logs during scanning.
 
 ## Verbose Mode
 Use `--verbose` to output detailed logs during scanning.
+
+## Verbose Mode
+Use `--verbose` to output detailed logs during scanning.
