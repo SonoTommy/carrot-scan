@@ -22,10 +22,10 @@
     "lint:fix": "eslint \"**/*.{js,ts}\" --config .eslintrc.cjs --fix",
     "format": "prettier --write \"**/*.{js,ts,json,md}\"",
     "start-api": "node ./src/api.js",
-    "postinstall": "node ./postinstall.cjs",
+    "postinstall": "node ./postinstall.cjs && chmod +x ./bin/carrot-scan.js",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "package": "vsce package"
+    "package": "vsce package"  
   },
   "exports": {
     ".": {
