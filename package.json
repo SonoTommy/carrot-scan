@@ -1,6 +1,6 @@
 {
   "name": "carrot-scan",
-  "version": "4.0.780",
+  "version": "4.0.781",
   "description": "Command-line tool for detecting vulnerabilities in files and directories.",
   "main": "index.js",
   "types": "index.d.ts",
@@ -25,7 +25,7 @@
     "postinstall": "node ./postinstall.cjs && chmod +x ./bin/carrot-scan.js",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "package": "vsce package"  
+    "package": "vsce package"
   },
   "exports": {
     ".": {
