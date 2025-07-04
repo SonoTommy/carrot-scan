@@ -2,7 +2,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import chalk from 'chalk';
 
-const PLUGINS_DIR = path.join(process.cwd(), 'plugins');
+const PLUGINS_DIR = path.join(process.cwd(), 'packages/core/plugins');
 const CONFIG_PATH = path.join(process.cwd(), 'carrot-scan.config.js');
 
 async function readConfig() {
@@ -31,23 +31,21 @@ export async function listPlugins() {
     const config = await readConfig();
 
     if (!config || !config.plugins) {
-      console.log(chalk.yellow('Configuration not found or invalid.'));
-      return;
+      return [];
     }
     
     if (pluginFiles.length === 0) {
-      console.log(chalk.yellow('No plugins found.'));
-      return;
+      return [];
     }
 
-    console.log(chalk.bold('Available Plugins:'));
-    for (const file of pluginFiles) {
+    return pluginFiles.map(file => {
       const pluginName = file.replace('.js', '');
-      const status = config.plugins[pluginName]?.enabled ? chalk.green('(enabled)') : chalk.red('(disabled)');
-      console.log(`- ${pluginName} ${status}`);
-    }
+      const enabled = config.plugins[pluginName]?.enabled || false;
+      return { name: pluginName, enabled };
+    });
   } catch (error) {
     console.error(chalk.red(`Error listing plugins: ${error.message}`));
+    return [];
   }
 }
 
@@ -56,13 +54,11 @@ export async function enablePlugin(pluginName) {
   if (!config) return;
 
   if (!config.plugins[pluginName]) {
-    console.log(chalk.red(`Plugin '${pluginName}' not found in configuration.`));
     return;
   }
 
   config.plugins[pluginName].enabled = true;
   await writeConfig(config);
-  console.log(chalk.green(`Plugin '${pluginName}' enabled.`));
 }
 
 export async function disablePlugin(pluginName) {
@@ -70,13 +66,11 @@ export async function disablePlugin(pluginName) {
   if (!config) return;
 
   if (!config.plugins[pluginName]) {
-    console.log(chalk.red(`Plugin '${pluginName}' not found in configuration.`));
     return;
   }
 
   config.plugins[pluginName].enabled = false;
   await writeConfig(config);
-  console.log(chalk.yellow(`Plugin '${pluginName}' disabled.`));
 }
 
 export async function createPlugin(pluginName) {

@@ -1,1 +1,1 @@
-export { scan } from './scanner.js';
+export { scan } from '@carrot-scan/core';

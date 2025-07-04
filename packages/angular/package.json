@@ -1,0 +1,14 @@
+{
+  "name": "@carrot-scan/angular",
+  "version": "1.0.0",
+  "description": "Angular service for carrot-scan.",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "type": "module",
+  "author": "SonoTommy [https://github.com/SonoTommy]",
+  "license": "MIT",
+  "dependencies": {
+    "@carrot-scan/core": "1.0.0",
+    "@angular/core": "^14.0.0"
+  }
+}

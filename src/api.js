@@ -1,5 +1,6 @@
 // src/api.js
 import Fastify from 'fastify';
+import { listPlugins, enablePlugin, disablePlugin } from '../plugin-manager.js';
 import { scan } from '../index.js';
 import fastifySwagger from '@fastify/swagger';
 import fastifySwaggerUi from '@fastify/swagger-ui';
@@ -34,6 +35,38 @@ export function buildServer({ port = 3000 } = {}) {
       });
     }
   );
+
+  app.put('/plugins/:name/enable', async (req, reply) => {
+    try {
+      const { name } = req.params;
+      await enablePlugin(name);
+      reply.status(204).send();
+    } catch (err) {
+      req.log.error(err);
+      reply.status(500).send({ error: err.message });
+    }
+  });
+
+  app.put('/plugins/:name/disable', async (req, reply) => {
+    try {
+      const { name } = req.params;
+      await disablePlugin(name);
+      reply.status(204).send();
+    } catch (err) {
+      req.log.error(err);
+      reply.status(500).send({ error: err.message });
+    }
+  });
+
+  app.get('/plugins', async (req, reply) => {
+    try {
+      const plugins = await listPlugins();
+      return plugins;
+    } catch (err) {
+      req.log.error(err);
+      reply.status(500).send({ error: err.message });
+    }
+  });
 
   app.post(
     '/scan',

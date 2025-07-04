@@ -4,14 +4,14 @@ import { globby } from 'globby';
 import { execSync } from 'node:child_process';
 import { EventEmitter } from 'node:events';
 
-import { CriticalPlugin } from './plugins/critical.js';
-import { ESLintPlugin } from './plugins/eslint.js';
-import { ComplexityPlugin } from './plugins/complexity.js';
-import { XrayPlugin } from './plugins/xray.js';
-import { SemgrepPlugin } from './plugins/semgrep.js';
-import { HeuristicPlugin } from './plugins/heuristic.js';
-import { AuditPlugin } from './plugins/audit.js';
-import { DockerfilePlugin } from './plugins/dockerfile.js';
+import { CriticalPlugin } from '../plugins/critical.js';
+import { ESLintPlugin } from '../plugins/eslint.js';
+import { ComplexityPlugin } from '../plugins/complexity.js';
+import { XrayPlugin } from '../plugins/xray.js';
+import { SemgrepPlugin } from '../plugins/semgrep.js';
+import { HeuristicPlugin } from '../plugins/heuristic.js';
+import { AuditPlugin } from '../plugins/audit.js';
+import { DockerfilePlugin } from '../plugins/dockerfile.js';
 
 const plugins = [
   new CriticalPlugin(),

@@ -9,7 +9,10 @@
   },
   "private": false,
   "workspaces": [
-    "."
+    ".",
+    "packages/core",
+    "packages/react",
+    "packages/angular"
   ],
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
@@ -90,17 +93,14 @@
   },
   "license": "MIT",
   "dependencies": {
+    "@carrot-scan/core": "workspace:*",
     "@fastify/swagger": "^6.1.1",
     "@fastify/swagger-ui": "^4.2.0",
-    "@nodesecure/js-x-ray": "^9.0.0",
-    "carrot-scan": "workspace:*",
     "chalk": "^5.4.1",
     "commander": "^14.0.0",
     "fastify": "^4.29.1",
-    "globby": "^14.1.0",
     "inquirer": "^12.7.0",
     "open": "^10.1.2",
-    "typhonjs-escomplex": "^0.1.0",
     "yaml": "^2.8.0"
   },
   "devDependencies": {

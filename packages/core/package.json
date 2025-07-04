@@ -1,0 +1,16 @@
+{
+  "name": "@carrot-scan/core",
+  "version": "1.0.0",
+  "description": "Core scanning logic for carrot-scan.",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "type": "module",
+  "author": "SonoTommy [https://github.com/SonoTommy]",
+  "license": "MIT",
+  "dependencies": {
+    "@nodesecure/js-x-ray": "^9.0.0",
+    "chalk": "^5.4.1",
+    "globby": "^14.1.0",
+    "typhonjs-escomplex": "^0.1.0"
+  }
+}
