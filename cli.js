@@ -2,6 +2,8 @@
 import { program } from 'commander';
 import chalk from 'chalk';
 import { scan } from './scanner.js';
+import { listPlugins, enablePlugin, disablePlugin, createPlugin } from './plugin-manager.js';
+import { doctor } from './doctor.js';
 
 program
   .name('carrot-scan')
@@ -48,5 +50,28 @@ program
       process.exitCode = 3; // unexpected error
     }
   });
+
+program.command('doctor')
+  .description('check for potential issues')
+  .action(doctor);
+
+const pluginCommand = program.command('plugin')
+  .description('manage plugins');
+
+pluginCommand.command('list')
+  .description('list all available plugins')
+  .action(listPlugins);
+
+pluginCommand.command('enable <plugin-name>')
+  .description('enable a plugin')
+  .action(enablePlugin);
+
+pluginCommand.command('disable <plugin-name>')
+  .description('disable a plugin')
+  .action(disablePlugin);
+
+pluginCommand.command('create <plugin-name>')
+  .description('create a new plugin from template')
+  .action(createPlugin);
 
 program.parse(process.argv);

@@ -87,7 +87,8 @@ export async function scan(target, { mode = 'default', incremental = false, stre
           const matchingFiles = allFiles.filter((filePath) => plugin.constructor.applies(filePath));
           if (!matchingFiles.length) continue;
           for (const filePath of matchingFiles) {
-            const content = await fs.readFile(filePath, 'utf8');
+            const content = await safeReadFile(filePath);
+            if (!content) continue;
             const results = await plugin.run(filePath, { target, mode, content });
             for (const r of results) {
               pluginResults.push(r);
@@ -185,7 +186,8 @@ export async function scan(target, { mode = 'default', incremental = false, stre
     if (!matchingFiles.length) continue;
 
     for (const filePath of matchingFiles) {
-      const content = await fs.readFile(filePath, 'utf8');
+      const content = await safeReadFile(filePath);
+      if (!content) continue;
       const results = await plugin.run(filePath, { target, mode, content });
       for (const r of results) pluginResults.push(r);
     }
@@ -235,4 +237,17 @@ export async function scan(target, { mode = 'default', incremental = false, stre
     messages,
     exitCode: rating === 'bad' ? 2 : rating === 'poor' ? 1 : 0,
   };
+}
+
+/**
+ * Safely read a file, returning null if it fails.
+ * @param {string} filePath
+ * @returns {Promise<string|null>}
+ */
+async function safeReadFile(filePath) {
+  try {
+    return await fs.readFile(filePath, 'utf8');
+  } catch {
+    return null;
+  }
 }

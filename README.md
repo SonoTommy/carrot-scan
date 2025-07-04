@@ -11,22 +11,21 @@
 [![GitHub stars](https://img.shields.io/github/stars/SonoTommy/carrot-scan.svg?style=social&label=Stars)](https://github.com/SonoTommy/carrot-scan/stargazers)
 [![Downloads](https://img.shields.io/npm/dt/carrot-scan.svg)](https://www.npmjs.com/package/carrot-scan)
 
-## Installation
-
-Install carrot-scan globally using npm:
-
-```bash
-npm install -g carrot-scan
-```
-
-or using yarn
-
-```bash
-yarn global add carrot-scan
-```
-
 A **fast**, **extensible**, and **plugin-driven** code scanner for JavaScript, TypeScript, and any other file in your project.  
 It evaluates code quality, complexity, security vulnerabilities, and more, producing a **single aggregated score** (0–100) and actionable feedback.
+
+## Table of Contents
+
+- [Features](#features)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Plugin Management](#plugin-management)
+- [API](#api)
+- [Plugin Development](#plugin-development)
+- [Configuration](#configuration)
+- [Contributing](#contributing)
+- [Support](#support)
+- [License](#license)
 
 ## Features
 
@@ -66,7 +65,8 @@ carrot-scan [options] <target>
 - `-f, --fast` : Quick scan (ESLint + heuristics only).
 - `-c, --complete` : Full scan (all checks).
 - `-j, --json` : Output machine-readable JSON.
-- v, --version : Show the installed version of carrot-scan.
+- `-v, --version` : Show the installed version of carrot-scan.
+- `--verbose`: Output detailed logs during scanning.
 
 ### Examples
 
@@ -81,16 +81,6 @@ carrot-scan src/ -c
 carrot-scan . -c --json > report.json
 ```
 
-
-```bash
-# Scan a single file
-carrot-scan path/to/file.js -c
-
-# Display version
-carrot-scan --version
-```
-
-
 ### Supply-Chain (SBOM) Generation
 
 Generate a Software Bill of Materials (SBOM) with embedded vulnerability information from the OSV public API. Supports CycloneDX XML and SARIF formats.
@@ -101,81 +91,69 @@ carrot-scan sbom .
 
 # Generate SARIF output instead of XML
 carrot-scan sbom . --sarif
-
-# Include devDependencies in the SBOM
-carrot-scan sbom . --dev
-
-# Specify output file path
-carrot-scan sbom . --sarif -o path/to/report.sarif
 ```
 
-### Advanced Configuration
+### Doctor Command
 
-You can specify a custom configuration file:
+Check for potential issues with your `carrot-scan` setup.
 
 ```bash
-carrot-scan -c --config path/to/carrot-scan.config.js
+carrot-scan doctor
 ```
+
+## Plugin Management
+
+`carrot-scan` provides commands to manage its plugins:
+
+- `list`: List all available plugins.
+- `enable <plugin-name>`: Enable a plugin.
+- `disable <plugin-name>`: Disable a plugin.
+- `create <plugin-name>`: Create a new plugin from a template.
 
 ## API
 
-Use programmatically:
+### Programmatic Usage
 
-````js
+Use `carrot-scan` programmatically in your own projects.
+
+```js
 import { scan } from 'carrot-scan';
 
 (async () => {
   const result = await scan('src/', { mode: 'complete' });
   console.log(result);
 })();
-
-
-### HTTP/REST API
-
-Invoke the scan via HTTP POST and receive JSON:
-
-```bash
-curl -X POST http://localhost:3000/scan \
-  -H 'Content-Type: application/json' \
-  -d '{"target":"./src","mode":"fast"}'
-````
-
-### Streaming API
-
-Use Server-Sent Events to receive live progress updates:
-
-```bash
-curl -N "http://localhost:3000/scan/stream?target=./src&mode=fast"
 ```
 
-````
+### REST API
+
+The REST API allows you to run scans via HTTP.
+
+- **POST /scan**: Run a scan.
+  - **Body**: `{ "target": "./src", "mode": "fast" }`
+- **GET /scan/stream**: Get real-time scan results using Server-Sent Events.
+  - **Query Params**: `target`, `mode`
+
+For more details, see the [OpenAPI specification](.github/openapi.yaml).
 
 ## Plugin Development
 
-Plugins live in the `plugins/` directory. Each plugin exports:
+Plugins are the core of `carrot-scan`. To create a new plugin, run:
 
-- `name`: string identifier.
-- `scope`: `'js' | 'all'` (files to apply to).
-- `applies(file: string)`: boolean.
-- `run(files: string[], context)`: `Promise<number>` of issue count.
-
-See existing plugins for examples:
 ```bash
-plugins/
-├─ critical.js
-├─ eslint.js
-├─ complexity.js
-├─ xray.js
-├─ semgrep.js
-├─ heuristic.js
-└─ audit.js
-````
+carrot-scan plugin create my-plugin
+```
 
-For a template to create your own plugin, see `plugins/template.js`.
+This will generate a new plugin file in the `plugins/` directory. A plugin is a class that extends `Plugin` and implements two methods:
+
+- `applies(file: string)`: A static method that returns `true` if the plugin should be run on the given file.
+- `run(file: string, context: object)`: An async method that performs the scan and returns an array of issues.
+
+See the existing plugins for examples.
 
 ## Configuration
 
-Create `carrot-scan.config.js` in your project root to override weights, thresholds, or enable/disable plugins:
+Create a `carrot-scan.config.js` file in your project root to customize `carrot-scan`.
 
 ```js
 // carrot-scan.config.js
@@ -183,7 +161,6 @@ export default {
   weights: {
     eslint: 1.5,
     xray: 10,
-    audit: 5,
   },
   thresholds: {
     complexity: 12,
@@ -196,29 +173,13 @@ export default {
 
 ## Contributing
 
-1. Fork the repository.
-2. Create your branch (`git checkout -b feature/my-check`).
-3. Make changes and add tests.
-4. Submit a pull request.
+Contributions are welcome! Please open an issue or submit a pull request.
 
-Please follow the existing code style and include unit tests for new plugins.
+## Support
 
-## ☕ Support my project
-
-If you like carrot-scan and want to support its development, you can buy me a coffee:
-
-☕ (https://ko-fi.com/SonoTommy)
-
-> **⚠️ Disclaimer:**
-> Carrot-scan is currently under active development and may produce inaccurate or incomplete results.
-> Use this tool at your own risk. The author assumes no liability for any direct or indirect damages arising from its use.
-> This software is provided “as is,” without warranty of any kind, express or implied, including but not limited to warranties of merchantability or fitness for a particular purpose.
-> Always review and verify scan findings manually before making any decisions based on its output.
+If you find `carrot-scan` useful, please consider [supporting the project](https://ko-fi.com/sonotommy).
 
 ## License
 
-© 2025 Tommaso “Tommy” [MIT License](LICENSE)
-
-## Verbose Mode
-Use `--verbose` to output detailed logs during scanning.
+[MIT](LICENSE)
 

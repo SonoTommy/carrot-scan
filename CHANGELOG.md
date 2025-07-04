@@ -1,3 +1,13 @@
+## [3.0.2] - 2025-07-04
+
+### Added
+- `doctor` command to check for potential issues.
+- Utility function `safeReadFile` to prevent crashes on unreadable files.
+
+### Changed
+- Improved `README.md` with a Table of Contents and more detailed sections.
+- Refactored `scanner.js` to use `safeReadFile`.
+
 ## [2.0.895] - 2025-07-03
 
 - Inserted startup log message
