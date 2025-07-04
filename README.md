@@ -37,6 +37,15 @@ It evaluates code quality, complexity, security vulnerabilities, and more, produ
 - 🔎 **Heuristic scanning**: Regex-based patterns for generic vulnerabilities across all file types.
 - 🛠️ **Dependency audit**: Runs `npm audit` and scores known CVEs.
 - ⚙️ **Plugin architecture**: Easily add or remove checks by dropping in plugins under `plugins/`.
+- 🐳 **Dockerfile scanning**: Checks for common misconfigurations in `Dockerfile`.
+
+## Recent Improvements
+
+-   **Enhanced CLI**: Added a new `outdated` command to check for outdated dependencies.
+-   **New Plugin**: Added a new `dockerfile` plugin to check for common misconfigurations in `Dockerfile`.
+-   **Performance Boost**: Parallelized plugin execution and implemented file content caching to improve performance.
+-   **CI/CD Pipeline**: Implemented a GitHub Actions workflow to automatically test and lint the code.
+-   **Code Refactoring**: Refactored the code for better maintainability and readability.
 
 ## Installation
 
@@ -99,6 +108,14 @@ Check for potential issues with your `carrot-scan` setup.
 
 ```bash
 carrot-scan doctor
+```
+
+### Outdated Command
+
+Check for outdated dependencies.
+
+```bash
+carrot-scan outdated
 ```
 
 ## Plugin Management
@@ -174,6 +191,33 @@ export default {
 ## Contributing
 
 Contributions are welcome! Please open an issue or submit a pull request.
+
+### Development
+
+To get started with development:
+
+1.  Clone the repository:
+    ```bash
+    git clone https://github.com/SonoTommy/carrot-scan.git
+    ```
+2.  Install dependencies:
+    ```bash
+    cd carrot-scan
+    npm install
+    ```
+3.  Link the package to use the `carrot-scan` command globally:
+    ```bash
+    npm link
+    ```
+
+### Pull Requests
+
+When submitting a pull request, please make sure to:
+
+-   Follow the existing code style.
+-   Add tests for your changes.
+-   Update the documentation if necessary.
+-   Run `npm test` and `npm run lint` before submitting.
 
 ## Support
 

@@ -4,15 +4,16 @@ import chalk from 'chalk';
 import { scan } from './scanner.js';
 import { listPlugins, enablePlugin, disablePlugin, createPlugin } from './plugin-manager.js';
 import { doctor } from './doctor.js';
+import { outdated } from './outdated.js';
 
 // ─── BANNER ────────────────────────────────────────────────────────────────
 if (process.stdout.isTTY && !process.env.CI) {
   console.log(chalk.cyan(`
   ____                _       _   ____                 
  / ___|  ___ _ __ ___| |__   / | / ___|  ___ __ _ _ __  
- \\___ \\ / __| '__/ _ \\ '_ \\  | | \\___ \\ / __/ _\` | '_ \\ 
+ \___ \ / __| '__/ _ \ '_ \  | | \___ \ / __/ _\` | '_ \ 
   ___) | (__| | |  __/ |_) | | |  ___) | (_| (_| | | | |
- |____/ \\___|_|  \\___|_.__/  |_| |____/ \\___\\__,_|_| |_|
+ |____/ \___|_|  \___|_.__/  |_| |____/ \___\\__,_|_| |_|
 
  🚀 carrot-scan v0.1.0 — 0⭐ stars on GitHub! Help us reach 100⭐!
 `));
@@ -70,6 +71,10 @@ program
 program.command('doctor')
   .description('check for potential issues')
   .action(doctor);
+
+program.command('outdated')
+  .description('check for outdated dependencies')
+  .action(outdated);
 
 const pluginCommand = program.command('plugin')
   .description('manage plugins');
