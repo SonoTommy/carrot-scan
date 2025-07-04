@@ -98,6 +98,8 @@
     "commander": "^14.0.0",
     "fastify": "^4.29.1",
     "globby": "^14.1.0",
+    "inquirer": "^12.7.0",
+    "open": "^10.1.2",
     "typhonjs-escomplex": "^0.1.0",
     "yaml": "^2.8.0"
   },
