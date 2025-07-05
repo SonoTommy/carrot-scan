@@ -25,7 +25,7 @@
     "lint:fix": "eslint \"**/*.{js,ts}\" --config .eslintrc.cjs --fix",
     "format": "prettier --write \"**/*.{js,ts,json,md}\"",
     "start-api": "node ./src/api.js",
-    "postinstall": "node ./postinstall.cjs && chmod +x ./bin/carrot-scan.js",
+    "postinstall": "node ./postinstall.cjs",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "package": "vsce package"
@@ -99,6 +99,7 @@
     "chalk": "^5.4.1",
     "commander": "^14.0.0",
     "fastify": "^4.29.1",
+    "figlet": "^1.8.1",
     "inquirer": "^12.7.0",
     "open": "^10.1.2",
     "yaml": "^2.8.0"
