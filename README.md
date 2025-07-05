@@ -29,6 +29,8 @@ It evaluates code quality, complexity, security vulnerabilities, and more, produ
 
 ## Features
 
+- 🧠 **AI-powered scanning**: Uses a lightweight, local AI model to detect potentially malicious code.
+-  Datenbank für Exploits **Exploit-DB-Integration**: Sucht in der OSV-Datenbank nach bekannten Schwachstellen in Ihren Abhängigkeiten.
 - 🛡️ **Critical patterns**: Immediately fails on destructive or remote‐execution hooks (`rm -rf`, `include()`, `eval()`, etc.).
 - 📏 **ESLint integration**: Runs ESLint (v9+) with recommended rules on JS/TS files.
 - 🔢 **Cyclomatic complexity**: Uses `typhonjs-escomplex` to penalize high-complexity code.
