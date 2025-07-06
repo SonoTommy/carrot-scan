@@ -1,0 +1,1 @@
+declare module '@nodesecure/js-x-ray';
