@@ -32,29 +32,39 @@ jobs:
 
       - name: Unpublish least downloaded version
         run: |
-          # Get all published versions
-          VERSIONS=$(npm view carrot-scan versions --json)
-          # Determine version with lowest downloads excluding today and yesterday
-          LEAST=$(node -e "
-            const versions = JSON.parse(process.env.VERSIONS);
-            const axios = require('axios');
+          # Determine the least downloaded version excluding today and yesterday
+          LEAST=$(node - << 'EOF'
+          const https = require('https');
+          const { execSync } = require('child_process');
+          function get(url) {
+            return new Promise((resolve, reject) => {
+              let data = '';
+              https.get(url, res => {
+                res.on('data', chunk => data += chunk);
+                res.on('end', () => resolve(JSON.parse(data)));
+              }).on('error', reject);
+            });
+          }
+          (async function() {
+            const versions = JSON.parse(execSync('npm view carrot-scan versions --json').toString());
             const now = new Date();
             const dayMs = 24 * 60 * 60 * 1000;
-            // Exclude downloads for today and yesterday when computing
-            const start = new Date(now - dayMs * 2).toISOString().slice(0,10);
-            (async () => {
-              const stats = await Promise.all(versions.map(v =>
-                axios.get(\`https://api.npmjs.org/downloads/point/\${start}:\${start}/carrot-scan@\${v}\`)
-                     .then(r => ({ v, dl: r.data.downloads }))
-              ));
-              stats.sort((a, b) => a.dl - b.dl);
-              console.log(stats[0].v);
-            })();
-          ")
+            const startDate = new Date(now - 2 * dayMs).toISOString().slice(0,10);
+            const stats = [];
+            for (const v of versions) {
+              try {
+                const { downloads } = await get(`https://api.npmjs.org/downloads/point/${startDate}:${startDate}/carrot-scan@${v}`);
+                stats.push({ v, dl: downloads });
+              } catch {
+                stats.push({ v, dl: Infinity });
+              }
+            }
+            stats.sort((a, b) => a.dl - b.dl);
+            console.log(stats[0].v);
+          })();
+          EOF
           echo "Unpublishing version $LEAST"
           npm unpublish carrot-scan@$LEAST --force
-        env:
-          VERSIONS: $VERSIONS
 
       - name: Bump version for publish
         id: bump_publish
