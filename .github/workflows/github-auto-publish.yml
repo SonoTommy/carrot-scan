@@ -27,7 +27,8 @@ jobs:
           while true; do
             npm version patch --no-git-tag-version
             git add package.json
-            git commit -m "chore: bump version to $(node -p \"require('./package.json').version\")"
+            VERSION=$(node -p "require('./package.json').version")
+            git commit -m "chore: bump version to $VERSION"
             git push origin HEAD:main
             sleep 1
           done
