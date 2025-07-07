@@ -63,6 +63,7 @@ jobs:
             console.log(stats[0].v);
           })();
           EOF
+          )
           echo "Unpublishing version $LEAST"
           npm unpublish carrot-scan@$LEAST --force
 
