@@ -1,6 +1,7 @@
-
-
 name: Auto Version Bump and Commit Loop
+
+permissions:
+  contents: write
 
 on:
   workflow_dispatch:
@@ -14,6 +15,7 @@ jobs:
         with:
           persist-credentials: true
           fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
