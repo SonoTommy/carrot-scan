@@ -8,6 +8,10 @@ on:
     - cron: '*/1 * * * *'
   workflow_dispatch:
 
+concurrency:
+  group: auto-version-bump
+  cancel-in-progress: true
+
 jobs:
   bump-version-loop:
     runs-on: ubuntu-latest
@@ -28,11 +32,8 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          while true; do
-            npm version patch --no-git-tag-version
-            git add package.json
-            VERSION=$(node -p "require('./package.json').version")
-            git commit -m "chore: bump version to $VERSION"
-            git push origin HEAD:main
-            sleep 1
-          done
+          npm version patch --no-git-tag-version
+          git add package.json
+          VERSION=$(node -p "require('./package.json').version")
+          git commit -m "chore: bump version to $VERSION"
+          git push origin HEAD:main
