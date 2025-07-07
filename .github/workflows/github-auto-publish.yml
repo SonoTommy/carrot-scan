@@ -1,0 +1,33 @@
+
+
+name: Auto Version Bump and Commit Loop
+
+on:
+  workflow_dispatch:
+
+jobs:
+  bump-version-loop:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: true
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Continuous version bump
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          while true; do
+            npm version patch --no-git-tag-version
+            git add package.json
+            git commit -m "chore: bump version to $(node -p \"require('./package.json').version\")"
+            git push origin HEAD:main
+            sleep 1
+          done
