@@ -1,12 +1,10 @@
 name: Auto Bump & Publish
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
-  schedule:
-    # Ogni 5 minuti
-    - cron: '*/5 * * * *'
-  repository_dispatch:
-    types: [auto-bump]
 
 # Blocca le esecuzioni parallele: le nuove run vengono messe in coda
 concurrency:
@@ -56,14 +54,3 @@ jobs:
           npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-      - name: Trigger next run
-        uses: actions/github-script@v6
-        with:
-          github-token: ${{ secrets.GH_PAT }}
-          script: |
-            await github.rest.repos.createDispatchEvent({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              event_type: 'auto-bump',
-              client_payload: {}
-            })
