@@ -30,6 +30,32 @@ jobs:
       - name: Configure npm auth
         run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
 
+      - name: Unpublish least downloaded version
+        run: |
+          # Get all published versions
+          VERSIONS=$(npm view carrot-scan versions --json)
+          # Determine version with lowest downloads excluding today and yesterday
+          LEAST=$(node -e "
+            const versions = JSON.parse(process.env.VERSIONS);
+            const axios = require('axios');
+            const now = new Date();
+            const dayMs = 24 * 60 * 60 * 1000;
+            // Exclude downloads for today and yesterday when computing
+            const start = new Date(now - dayMs * 2).toISOString().slice(0,10);
+            (async () => {
+              const stats = await Promise.all(versions.map(v =>
+                axios.get(\`https://api.npmjs.org/downloads/point/\${start}:\${start}/carrot-scan@\${v}\`)
+                     .then(r => ({ v, dl: r.data.downloads }))
+              ));
+              stats.sort((a, b) => a.dl - b.dl);
+              console.log(stats[0].v);
+            })();
+          ")
+          echo "Unpublishing version $LEAST"
+          npm unpublish carrot-scan@$LEAST --force
+        env:
+          VERSIONS: $VERSIONS
+
       - name: Bump version for publish
         id: bump_publish
         run: |
